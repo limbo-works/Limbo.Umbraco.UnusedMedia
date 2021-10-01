@@ -135,7 +135,10 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         }
 
         protected virtual IEnumerable<IUser> GetUsers() {
-            return _userService.GetAll(0, int.MaxValue, out _).OrderBy(x => x.Name);
+            return _userService
+                .GetAll(0, int.MaxValue, out _)
+                .Where(x => x.UserState == UserState.Active)
+                .OrderBy(x => x.Name);
         }
 
     }
