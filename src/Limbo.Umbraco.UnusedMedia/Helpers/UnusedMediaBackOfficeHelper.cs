@@ -115,7 +115,7 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
 
         }
 
-        private void AppendChildren(List<ListItem> items, IPublishedContent parent, int levels) {
+        protected virtual void AppendChildren(List<ListItem> items, IPublishedContent parent, int levels) {
 
             if (parent.Level == levels) return;
 

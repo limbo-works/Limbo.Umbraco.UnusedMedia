@@ -22,7 +22,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
             _umbracoContextAccessor = umbracoContextAccessor;
         }
 
-        public UnusedMediaResult GetUnusedMedia(UnusedMediaOptions options) {
+        public virtual UnusedMediaResult GetUnusedMedia(UnusedMediaOptions options) {
 
             if (options == null) options = new UnusedMediaOptions();
 
