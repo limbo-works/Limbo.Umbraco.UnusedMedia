@@ -49,7 +49,7 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
             writers.Add(new ListItem("", _localizedTextService.Localize("unusedMedia/updatedBy")));
             writers.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMedia/me")));
 
-            foreach (IUser user in GetUsers()) {
+            foreach (IUser user in GetUsers(context, currentUser)) {
                 if (currentUser.Id == user.Id) continue;
                 creators.Add(new ListItem(user.Id, user.Name));
                 writers.Add(new ListItem(user.Id, user.Name));
@@ -134,7 +134,7 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
 
         }
 
-        protected virtual IEnumerable<IUser> GetUsers() {
+        protected virtual IEnumerable<IUser> GetUsers(HttpContextBase context, IUser currentUser) {
             return _userService
                 .GetAll(0, int.MaxValue, out _)
                 .Where(x => x.UserState == UserState.Active)
