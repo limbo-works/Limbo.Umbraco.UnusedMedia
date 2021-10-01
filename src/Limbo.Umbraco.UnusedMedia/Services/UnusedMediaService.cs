@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Limbo.Umbraco.UnusedMedia.Extensions;
 using Limbo.Umbraco.UnusedMedia.Models;
-using Skybrud.Essentials.Strings;
 using Skybrud.Essentials.Strings.Extensions;
 using Umbraco.Core;
 using Umbraco.Core.Models.PublishedContent;
@@ -27,9 +26,9 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
             if (options == null) options = new UnusedMediaOptions();
 
             // Convert the "Path" option to a hash set
-            HashSet<int> path = new HashSet<int>(options?.Path ?? Array.Empty<int>());
-            HashSet<int> creatorIds = new HashSet<int>(options?.CreatorIds ?? Array.Empty<int>());
-            HashSet<int> writerIds = new HashSet<int>(options?.WriterIds ?? Array.Empty<int>());
+            HashSet<int> path = new HashSet<int>(options.Path ?? Array.Empty<int>());
+            HashSet<int> creatorIds = new HashSet<int>(options.CreatorIds ?? Array.Empty<int>());
+            HashSet<int> writerIds = new HashSet<int>(options.WriterIds ?? Array.Empty<int>());
             
             // Get the "Text" parameter
             string text = options?.Text;
