@@ -20,8 +20,6 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
 
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
 
-
-
         public UnusedMediaBackOfficeHelper(IUserService userService, ILocalizedTextService localizedTextService, IUmbracoContextAccessor umbracoContextAccessor) {
             _userService = userService;
             _localizedTextService = localizedTextService;
@@ -30,16 +28,14 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
 
         public virtual IEnumerable<FieldBase> GetFilters(HttpContextBase context, IUser currentUser) {
 
-            List<FieldBase> temp = new List<FieldBase>();
-
-            var allUsers = _userService.GetAll(0, int.MaxValue, out _);
-
-            temp.Add(new TextField("text") {
-                Placeholder = _localizedTextService.Localize("typeToSearch")
-            });
+            List<FieldBase> fields = new List<FieldBase> {
+                new TextField("text") {
+                    Placeholder = _localizedTextService.Localize("typeToSearch")
+                }
+            };
 
             if (TryGetFolders(context, currentUser, out List<ListItem> items)) {
-                temp.Add(new DropDownList("path") {
+                fields.Add(new DropDownList("path") {
                     Items = items
                 });
             }
@@ -53,21 +49,21 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
             writers.Add(new ListItem("", _localizedTextService.Localize("unusedMedia/updatedBy")));
             writers.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMedia/me")));
 
-            foreach (IUser user in allUsers.OrderBy(x => x.Name)) {
+            foreach (IUser user in GetUsers()) {
                 if (currentUser.Id == user.Id) continue;
                 creators.Add(new ListItem(user.Id, user.Name));
                 writers.Add(new ListItem(user.Id, user.Name));
             }
             
-            temp.Add(new DropDownList("creatorIds") {
+            fields.Add(new DropDownList("creatorIds") {
                 Items = creators
             });
 
-            temp.Add(new DropDownList("writerIds") {
+            fields.Add(new DropDownList("writerIds") {
                 Items = writers
             });
 
-            return temp;
+            return fields;
 
         }
 
@@ -136,6 +132,10 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
 
             }
 
+        }
+
+        protected virtual IEnumerable<IUser> GetUsers() {
+            return _userService.GetAll(0, int.MaxValue, out _).OrderBy(x => x.Name);
         }
 
     }
