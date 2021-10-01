@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
+<language alias="en" intName="English (US)" localName="English (US)" lcid="" culture="en-US">
+  <area alias="dashboardTabs">
+    <key alias="unusedMedia">Unused media</key>
+  </area>
+  <area alias="unusedMedia">
+    <key alias="me">Me</key>
+    <key alias="id">ID</key>
+    <key alias="name">Name</key>
+    <key alias="selectFolder">Select folder</key>
+    <key alias="createdBy">Created by</key>
+    <key alias="updatedBy">Updated by</key>
+  </area>
+</language>

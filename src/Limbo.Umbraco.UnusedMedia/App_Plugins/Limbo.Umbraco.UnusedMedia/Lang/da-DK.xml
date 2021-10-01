@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
+<language alias="da" intName="Danish" localName="dansk" lcid="6" culture="da-DK">
+  <area alias="dashboardTabs">
+    <key alias="unusedMedia">Ikke-brugte medier</key>
+  </area>
+  <area alias="unusedMedia">
+    <key alias="me">Mig</key>
+    <key alias="id">ID</key>
+    <key alias="name">Name</key>
+    <key alias="selectFolder">Vælg mappe</key>
+    <key alias="createdBy">Oprettet af</key>
+    <key alias="updatedBy">Ændret af</key>
+  </area>
+</language>

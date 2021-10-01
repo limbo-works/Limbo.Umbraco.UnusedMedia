@@ -1,0 +1,46 @@
+﻿<div class="limbo-unused-media" ng-controller="Limbo.Umbraco.UnusedMedia.Dashboard as vm">
+    <div ng-if="vm.loaded" class="filters">
+        <div class="filter" ng-repeat="filter in vm.filters">
+            <div ng-if="filter.type === 'text'">
+                <input type="text" name="{{filter.name}}" no-dirty-check ng-model="filter.value" placeholder="{{filter.placeholder}}" ng-change="vm.filterChanged(filter)" />
+            </div>
+            <div ng-if="filter.type === 'dropdown'">
+                <select ng-options="item as item.label for item in filter.items track by item.value" no-dirty-check ng-model="filter.selected" ng-change="vm.filterChanged(filter)"></select>
+            </div>
+        </div>
+    </div>
+    <div ng-if="vm.loaded" class="items">
+        <table class="table list">
+            <thead>
+            <tr>
+                <th>
+                    <localize key="unusedMedia_id">ID</localize>
+                </th>
+                <th class="col-name">
+                    <localize key="unusedMedia_name">Name</localize>
+                </th>
+                <th class="col-creator">
+                    <localize key="unusedMedia_createdBy">Created by</localize>
+                </th>
+                <th class="col-writer">
+                    <localize key="unusedMedia_updatedBy">Updated by</localize>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="item in vm.items">
+                    <td>{{item.id}}</td>
+                    <td class="col-name">
+                        <strong>{{item.name}}</strong>
+                        <div>
+                            <small>{{item.path.join(' - ')}}</small>
+                        </div>
+                    </td>
+                    <td class="col-creator">{{item.creatorName}}</td>
+                    <td class="col-writer">{{item.writerName}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <umb-load-indicator ng-if="vm.loading"></umb-load-indicator>
+</div>

@@ -1,0 +1,8 @@
+﻿{
+	"javascript": [
+		"/App_Plugins/Limbo.Umbraco.UnusedMedia/Scripts/Controllers/Dashboard.js"
+	],
+	"css": [
+		"/App_Plugins/Limbo.Umbraco.UnusedMedia/Styles/Styles.css"
+	] 
+}
