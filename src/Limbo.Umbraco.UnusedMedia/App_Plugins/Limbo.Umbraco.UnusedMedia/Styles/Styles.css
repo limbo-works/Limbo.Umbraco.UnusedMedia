@@ -1,8 +1,18 @@
 ﻿.limbo-unused-media .filters {
   display: flex;
 }
-.limbo-unused-media .filter + .filter {
+.limbo-unused-media .filters input,
+.limbo-unused-media .filters select {
+  margin: 0;
+}
+.limbo-unused-media .filters .filter + .filter {
   margin-left: 10px;
+}
+.limbo-unused-media .filters .filter-text:first-child {
+  flex: 1;
+}
+.limbo-unused-media .filters input {
+  width: 100%;
 }
 .limbo-unused-media .items {
   margin-top: 20px;
@@ -17,4 +27,70 @@
 }
 .limbo-unused-media .col-name {
   width: 100%;
+}
+.limbo-unused-media .col-actions {
+  white-space: nowrap;
+}
+.limbo-unused-media tfoot > tr > td > div {
+  display: flex;
+}
+.limbo-unused-media tfoot > tr > td > div > div {
+  width: 50%;
+  line-height: 20px;
+  height: 20px;
+}
+.limbo-unused-media tfoot > tr > td > div .pagination {
+  margin: 5px 0;
+  font-size: 13px;
+}
+.limbo-unused-media tfoot > tr > td > div .pagination.pagination-right {
+  text-align: right;
+}
+.limbo-unused-media .pagination ul {
+  background: 0;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+}
+.limbo-unused-media .pagination ul > li > a,
+.limbo-unused-media .pagination ul > li > span {
+  padding: 0 4px;
+  color: #b0b0b0;
+  background: 0;
+  border: 0;
+}
+.limbo-unused-media .pagination ul > li.disabled > a,
+.limbo-unused-media .pagination ul > li.disabled > a:hover {
+  color: #d9d9d9;
+}
+.limbo-unused-media .pagination ul > li.active > a,
+.limbo-unused-media .pagination ul > li > a:hover {
+  color: #000;
+}
+.limbo-unused-media .active-filters span {
+  border-radius: 5px;
+  background: #f5c1bc;
+  padding: 5px 7px;
+  line-height: 13px;
+  font-size: 13px;
+  font-weight: bold;
+}
+.limbo-unused-media .stats {
+  display: flex;
+  margin-top: 20px;
+}
+.limbo-unused-media .stats div + div {
+  margin-left: 10px;
+}
+.limbo-unused-media.loading .stats-numbers {
+  opacity: 0.5;
+}
+.limbo-unused-media.loading .items {
+  opacity: 0.5;
+}
+.limbo-unused-media.loading .umb-empty-state {
+  opacity: 0.25;
 }

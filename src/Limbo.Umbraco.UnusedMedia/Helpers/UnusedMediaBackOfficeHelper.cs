@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using Limbo.Umbraco.UnusedMedia.Services;
+using Skybrud.Essentials.Reflection;
 using Skybrud.Essentials.Strings;
 using Skybrud.Forms.Models.Fields;
 using Umbraco.Core;
@@ -17,64 +18,67 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
 
         private readonly IUserService _userService;
         private readonly ILocalizedTextService _localizedTextService;
-
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
 
+        #region Properties
+
+        public int DefaultListLimit { get; protected set; }
+
+        #endregion
+
+        #region Constructors
+
         public UnusedMediaBackOfficeHelper(IUserService userService, ILocalizedTextService localizedTextService, IUmbracoContextAccessor umbracoContextAccessor) {
+            
             _userService = userService;
             _localizedTextService = localizedTextService;
             _umbracoContextAccessor = umbracoContextAccessor;
+
+            DefaultListLimit = 15;
+
         }
 
+        #endregion
+
+        #region Public member methods
+
+        /// <summary>
+        /// Returns a cache busting value that can be used for views and other resources from this package throughout
+        /// the backoffice.
+        /// </summary>
+        /// <returns>The cache busting value.</returns>
+        public string GetCacheBuster() {
+            return ReflectionUtils.GetInformationalVersion(GetType().Assembly);
+        }
+
+        /// <summary>
+        /// Returns a list of the filters to shown in the dashboard.
+        /// </summary>
+        /// <param name="context">The current HTTP context.</param>
+        /// <param name="currentUser">The current user.</param>
+        /// <returns>A collection of <see cref="FieldBase"/> representing the filters.</returns>
         public virtual IEnumerable<FieldBase> GetFilters(HttpContextBase context, IUser currentUser) {
 
-            List<FieldBase> fields = new List<FieldBase> {
-                new TextField("text") {
-                    Placeholder = _localizedTextService.Localize("typeToSearch")
-                }
-            };
+            List<FieldBase> filters = new List<FieldBase>();
 
-            if (TryGetFolders(context, currentUser, out List<ListItem> items)) {
-                fields.Add(new DropDownList("path") {
-                    Items = items
-                });
-            }
-            
-            List<ListItem> creators = new List<ListItem>();
-            List<ListItem> writers = new List<ListItem>();
-            
-            creators.Add(new ListItem("", _localizedTextService.Localize("unusedMedia/createdBy")));
-            creators.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMedia/me")));
-            
-            writers.Add(new ListItem("", _localizedTextService.Localize("unusedMedia/updatedBy")));
-            writers.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMedia/me")));
+            AppendTextFilter(context, currentUser, filters);
+            AppendFoldersFilters(context, currentUser, filters);
+            AppendCreatorsAndWritersFilters(context, currentUser, filters);
 
-            foreach (IUser user in GetUsers(context, currentUser)) {
-                if (currentUser.Id == user.Id) continue;
-                creators.Add(new ListItem(user.Id, user.Name));
-                writers.Add(new ListItem(user.Id, user.Name));
-            }
-            
-            fields.Add(new DropDownList("creatorIds") {
-                Items = creators
-            });
-
-            fields.Add(new DropDownList("writerIds") {
-                Items = writers
-            });
-
-            return fields;
+            return filters;
 
         }
 
-        public string GetCacheBuster() {
-            return Guid.NewGuid().ToString();
-        }
-
+        /// <summary>
+        /// Initializes and returns a new instance of <see cref="UnusedMediaOptions"/> based on the specified HTTP <paramref name="context"/>.
+        /// </summary>
+        /// <param name="context">The current HTTP context.</param>
+        /// <param name="currentUser">The current user.</param>
+        /// <returns>An instance of <see cref="UnusedMediaOptions"/>.</returns>
         public virtual UnusedMediaOptions GetOptions(HttpContextBase context, IUser currentUser) {
 
             int limit = StringUtils.ParseInt32(context.Request.QueryString["limit"]);
-            if (limit <= 0) limit = 15;
+            if (limit <= 0) limit = DefaultListLimit;
 
             int page = Math.Max(StringUtils.ParseInt32(context.Request.QueryString["page"]), 1);
             
@@ -89,28 +93,65 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
 
         }
 
-        protected virtual bool TryGetFolders(HttpContextBase context, IUser currentUser, out List<ListItem> result) {
+        #endregion
+
+        #region Protected member methods
+        
+        /// <summary>
+        /// Appends the text filter to <paramref name="filters"/>. The method can be overriden to change the default behaviour.
+        /// </summary>
+        /// <param name="context">The current HTTP context.</param>
+        /// <param name="currentUser">The current user.</param>
+        /// <param name="filters">The list of filters.</param>
+        protected virtual void AppendTextFilter(HttpContextBase context, IUser currentUser, List<FieldBase> filters) {
+            filters.Add(new TextField("text") {
+                Placeholder = _localizedTextService.Localize("typeToSearch")
+            });
+        }
+        
+        /// <summary>
+        /// Appends the folders filter to <paramref name="filters"/>. The method can be overriden to change the default behaviour.
+        /// </summary>
+        /// <param name="context">The current HTTP context.</param>
+        /// <param name="currentUser">The current user.</param>
+        /// <param name="filters">The list of filters.</param>
+        protected virtual void AppendFoldersFilters(HttpContextBase context, IUser currentUser, List<FieldBase> filters) {
             
-            result = new List<ListItem> {
+            // Initialize the list with an item for an empty selection
+            List<ListItem> items = new List<ListItem> {
                 new ListItem("", _localizedTextService.Localize("unusedMedia/selectFolder"))
             };
 
-            foreach (var level1 in _umbracoContextAccessor.UmbracoContext.Media.GetAtRoot()) {
+            // Iterate through all media at the root level
+            foreach (IPublishedContent level1 in _umbracoContextAccessor.UmbracoContext.Media.GetAtRoot()) {
 
+                // Ignore if not a folder
                 if (level1.ContentType.Alias != Constants.Conventions.MediaTypes.Folder) continue;
 
-                result.Add(new ListItem(level1.Id, level1.Name));
+                // Append an item for the folder
+                items.Add(new ListItem(level1.Id, level1.Name));
 
-                AppendChildren(result, level1, 2);
+                // Append child folders as well
+                AppendChildren(items, level1, 2);
 
             }
-            
-            result.AddRange(_umbracoContextAccessor.UmbracoContext.Media.GetAtRoot().Select(x => new ListItem(x.Id, x.Name)));
 
-            return true;
+            // Initialize and append the filter
+            filters.Add(new DropDownList("path") {
+                Items = items
+            });
 
         }
 
+        /// <summary>
+        /// Appends child folders of <paramref name="parent"/> to <paramref name="items"/>. The method is recursive,
+        /// meaning that this method will also be called for each child until <paramref name="levels"/> is reached.
+        ///
+        /// The method can be overriden to change the default behaviour.
+        /// </summary>
+        /// <param name="items">The list of items to which the children will be aded.</param>
+        /// <param name="parent">The parent media.</param>
+        /// <param name="levels">The maximum level or depth to append folders for.</param>
         protected virtual void AppendChildren(List<ListItem> items, IPublishedContent parent, int levels) {
 
             if (parent.Level == levels) return;
@@ -134,12 +175,56 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
 
         }
 
+        /// <summary>
+        /// Appends both a creators filter and a writers filter to <paramref name="filters"/>.
+        /// </summary>
+        /// <param name="context">The current HTTP context.</param>
+        /// <param name="currentUser">The current user.</param>
+        /// <param name="filters">The list of filters.</param>
+        protected virtual void AppendCreatorsAndWritersFilters(HttpContextBase context, IUser currentUser, List<FieldBase> filters) {
+
+            List<ListItem> creators = new List<ListItem>();
+            List<ListItem> writers = new List<ListItem>();
+            
+            creators.Add(new ListItem("", _localizedTextService.Localize("unusedMedia/createdBy")));
+            creators.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMedia/me")));
+            
+            writers.Add(new ListItem("", _localizedTextService.Localize("unusedMedia/updatedBy")));
+            writers.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMedia/me")));
+
+            foreach (IUser user in GetUsers(context, currentUser)) {
+                if (currentUser.Id == user.Id) continue;
+                creators.Add(new ListItem(user.Id, user.Name));
+                writers.Add(new ListItem(user.Id, user.Name));
+            }
+            
+            filters.Add(new DropDownList("creatorIds") {
+                Items = creators
+            });
+
+            filters.Add(new DropDownList("writerIds") {
+                Items = writers
+            });
+
+        }
+
+        /// <summary>
+        /// Returns a list of users to be shown in the unsued media dashboard.
+        ///
+        /// Override the method to control which users are shown. Default is all active users, sorted by their name in
+        /// ascending order.
+        /// </summary>
+        /// <param name="context">The current HTTP context.</param>
+        /// <param name="currentUser">The current user.</param>
+        /// <returns>An instance of <see cref="IEnumerable{IUser}"/> containing the users to be shown.</returns>
         protected virtual IEnumerable<IUser> GetUsers(HttpContextBase context, IUser currentUser) {
             return _userService
                 .GetAll(0, int.MaxValue, out _)
                 .Where(x => x.UserState == UserState.Active)
                 .OrderBy(x => x.Name);
         }
+
+        #endregion
 
     }
 

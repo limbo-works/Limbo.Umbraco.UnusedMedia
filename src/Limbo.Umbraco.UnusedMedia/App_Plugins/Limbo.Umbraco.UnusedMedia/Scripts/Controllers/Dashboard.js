@@ -1,10 +1,19 @@
-﻿angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard", function($http, $timeout) {
+﻿angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard", function ($http, $timeout, localizationService, overlayService) {
+
+    // Get the base URL for the API controller
+    const baseUrl = Umbraco.Sys.ServerVariables.umbracoSettings.umbracoPath + "/backoffice/Limbo/UnusedMedia/";
 
     const vm = this;
 
     let wait = null;
 
     vm.params = {};
+
+    vm.prev = function () { };
+
+    vm.next = function() {
+
+    };
 
     vm.updateList = function (page) {
 
@@ -22,6 +31,37 @@
             vm.loaded = true;
 
             vm.items = r.data.items;
+
+            vm.stats = r.data;
+            delete vm.stats.items;
+
+            vm.pagination = {
+                from: vm.stats.offset + 1,
+                to: Math.min(vm.stats.offset + vm.stats.limit, vm.stats.unused),
+                page: vm.stats.page,
+                pages: vm.stats.pages,
+                total: vm.stats.unused,
+                pagination: []
+            };
+
+            for (let i = Math.max(1, vm.stats.page - 5); i <= Math.min(vm.stats.page + 5, vm.stats.pages); i++) {
+                vm.pagination.pagination.push({
+                    page: i,
+                    active: i === vm.stats.page
+                });
+            }
+
+            const tokens = [
+                vm.pagination.from,
+                vm.pagination.to,
+                vm.pagination.total,
+                vm.pagination.page,
+                vm.pagination.pages
+            ];
+
+            localizationService.localize('redirects_pagination', tokens).then(function (value) {
+                vm.pagination.text = value;
+            });
 
         });
 
@@ -50,7 +90,34 @@
             vm.updateList();
         }
 
+        vm.activeFilters = vm.filters.filter(x => x.value).length;
+
     };
+
+    vm.moveToTrash = function (media) {
+
+        const options = {
+            confirmType: "delete",
+            submitButtonLabelKey: "unusedMedia_trashConfirm",
+            title: "Flyt til papirkurven",
+            content: `Er du sikker på at du vil flytte mediet <strong>${media.name}</strong> til papirkurven?`,
+            view: "/App_Plugins/Limbo.Umbraco.UnusedMedia/Views/Overlays/Confirm.html",
+            submit: function() {
+                options.submitButtonState = "busy";
+                $http.get(baseUrl + "TrashMedia?mediaId=" + media.id, { umbIgnoreErrors: true }).then(function() {
+                    overlayService.close();
+                }, function () {
+                    options.submitButtonState = "error";
+                });
+            },
+            close: function() {
+                overlayService.close();
+            }
+        };
+
+        overlayService.confirmDelete(options);
+
+    }; 
 
     function init() {
 

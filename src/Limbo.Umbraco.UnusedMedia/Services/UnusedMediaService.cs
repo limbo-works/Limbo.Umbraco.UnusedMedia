@@ -25,14 +25,6 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
             if (options == null) options = new UnusedMediaOptions();
 
-            // Convert the "Path" option to a hash set
-            HashSet<int> path = new HashSet<int>(options.Path ?? Array.Empty<int>());
-            HashSet<int> creatorIds = new HashSet<int>(options.CreatorIds ?? Array.Empty<int>());
-            HashSet<int> writerIds = new HashSet<int>(options.WriterIds ?? Array.Empty<int>());
-            
-            // Get the "Text" parameter
-            string text = options?.Text;
-
             // Create a new hash set of media that are already in use
             HashSet<int> usedMedia = _relationService
                 .GetAllRelationsByRelationType(4)
@@ -46,7 +38,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
             foreach (IPublishedContent media in _umbracoContextAccessor.UmbracoContext.Media.GetAtRoot()) {
 
                 // Handle non-folder media types at the root level
-                if (IsMatch(media, path, creatorIds, writerIds, text)) {
+                if (IsMatch(media, options)) {
 
                     // Increment the total count regardless if the media is in use or not
                     total++;
@@ -59,7 +51,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
                 // Iterate through all the descendants
                 foreach (IPublishedContent descendant in media.Descendants()) {
 
-                    if (!IsMatch(descendant, path, creatorIds, writerIds, text)) continue;
+                    if (!IsMatch(descendant, options)) continue;
 
                     // Skip if a folder
                     if (descendant.ContentType.Alias == Constants.Conventions.MediaTypes.Folder) continue;
@@ -90,19 +82,19 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
         }
 
-        protected virtual bool IsMatch(IPublishedContent media, HashSet<int> path, HashSet<int> creatorIds, HashSet<int> writerIds, string text) {
+        protected virtual bool IsMatch(IPublishedContent media, UnusedMediaOptions options) {
             
             // Always ignore folders
             if (media.ContentType.Alias == Constants.Conventions.MediaTypes.Folder) return false;
 
             // Ignore media not within "Path" if the filter is specified
-            if (path.Count > 0 && !media.Path.ToInt32Array().Any(path.Contains)) return false;
+            if (options.HasPath &&  !media.Path.ToInt32Array().Any(options.IsInPath)) return false;
 
-            if (creatorIds.Count > 0 && !creatorIds.Contains(media.CreatorId)) return false;
-            if (writerIds.Count > 0 && !writerIds.Contains(media.WriterId)) return false;
+            if (options.HasCreatorIds && !options.HasCreator(media.CreatorId)) return false;
+            if (options.HasWriterIds && !options.HasWriter(media.WriterId)) return false;
             
             // Ignore media whose names does not include the specified text
-            if (!string.IsNullOrWhiteSpace(text) && !media.Name.InvariantContains(text)) return false;
+            if (!string.IsNullOrWhiteSpace(options.Text) && !media.Name.InvariantContains(options.Text)) return false;
 
             return true;
 
