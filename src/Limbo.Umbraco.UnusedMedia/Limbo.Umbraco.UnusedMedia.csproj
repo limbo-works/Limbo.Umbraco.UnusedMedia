@@ -7,7 +7,7 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>1.0.0-beta001</Version>
+    <Version>1.0.0-beta002</Version>
     <Authors>Anders Bjerner</Authors>
     <Company>Limbo</Company>
     <Description>Dashboard of unused media for Umbraco 8.</Description>
