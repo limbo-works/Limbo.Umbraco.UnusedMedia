@@ -1,0 +1,16 @@
+﻿<div class="limbo-unused-media">
+    <div class="limbo-reference-list">
+        <div ng-if="references.total == 0">
+            <div class="alert alert-success">Der blev ikke fundet nogle referencer til det valgte medie.</div>
+        </div>
+        <div ng-if="references.total > 0">
+            <div class="alert alert-danger">
+                Der er i øjeblikket <strong>{{references.total}}</strong> referencer til dette medie. Hvis du sletter mediet, vil disse referencer til mediet stoppe med at virke.
+            </div>
+            <div ng-repeat="group in references.groups">
+                <h4>{{group.name}}</h4>
+                <div ng-include="group.view"></div>
+            </div>
+        </div>
+    </div>
+</div>

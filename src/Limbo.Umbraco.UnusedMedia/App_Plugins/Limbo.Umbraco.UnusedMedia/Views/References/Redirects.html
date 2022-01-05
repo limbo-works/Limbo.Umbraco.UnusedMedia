@@ -1,0 +1,18 @@
+﻿<div>
+    <table class="table list">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>URL</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="redirect in group.references">
+                <td>{{redirect.id}}</td>
+                <td class="fw">
+                    {{redirect.url}}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

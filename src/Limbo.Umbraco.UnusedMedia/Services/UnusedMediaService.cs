@@ -110,7 +110,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
             // TODO: Should the file name include a timestamp so the history is kept on disk?
 
-            string path = IOHelper.MapPath("~/App_Data/Limbo.UnusedMedia/ContentCacheUnusedMediaReport.json");
+            string path = IOHelper.MapPath("~/App_Data/Limbo.Umbraco.UnusedMedia/ContentCacheUnusedMediaReport.json");
 
             Directory.CreateDirectory(Path.GetDirectoryName(path));
 
@@ -360,7 +360,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
                 temp.Add(new ReferenceGroup {
                     Type = "content",
                     Name = "Content",
-                    View = "/App_Plugins/Limbo.Umbraco.UnusedMedia/Views/References/Content.cshtml",
+                    View = "/App_Plugins/Limbo.Umbraco.UnusedMedia/Views/References/Content.html",
                     References = content
                 });
             }

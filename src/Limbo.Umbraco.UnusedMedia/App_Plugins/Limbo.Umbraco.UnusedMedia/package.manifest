@@ -1,6 +1,11 @@
 ﻿{
 	"javascript": [
-		"/App_Plugins/Limbo.Umbraco.UnusedMedia/Scripts/Controllers/Dashboard.js"
+		"/App_Plugins/Limbo.Umbraco.UnusedMedia/Scripts/App.js",
+		"/App_Plugins/Limbo.Umbraco.UnusedMedia/Scripts/Services/UnusedMediaService.js",
+    "/App_Plugins/Limbo.Umbraco.UnusedMedia/Scripts/Directives/ReferenceList.js",
+		"/App_Plugins/Limbo.Umbraco.UnusedMedia/Scripts/Controllers/Dashboard.js",
+		"/App_Plugins/Limbo.Umbraco.UnusedMedia/Scripts/Controllers/Delete.js",
+		"/App_Plugins/Limbo.Umbraco.UnusedMedia/Scripts/Controllers/MediaDelete.js"
 	],
 	"css": [
 		"/App_Plugins/Limbo.Umbraco.UnusedMedia/Styles/Styles.css"

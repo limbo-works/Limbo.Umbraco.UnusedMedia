@@ -41,6 +41,18 @@
     <Content Include="App_Plugins\Limbo.Umbraco.UnusedMedia\**\*.js" />
     <Content Include="App_Plugins\Limbo.Umbraco.UnusedMedia\Lang\*.xml" />
     <Content Include="App_Plugins\Limbo.Umbraco.UnusedMedia\package.manifest" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Update="App_Plugins\Limbo.Umbraco.UnusedMedia\Styles\Styles.css">
+      <DependentUpon>Styles.less</DependentUpon>
+    </Content>
+    <Content Update="App_Plugins\Limbo.Umbraco.UnusedMedia\Styles\Styles.min.css">
+      <DependentUpon>Styles.css</DependentUpon>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="../build/Limbo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 

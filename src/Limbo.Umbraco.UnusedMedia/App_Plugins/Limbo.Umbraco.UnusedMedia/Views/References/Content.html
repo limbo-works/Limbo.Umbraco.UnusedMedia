@@ -1,0 +1,19 @@
+﻿<div>
+    <table class="table list">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="content in group.references">
+                <td>{{content.id}}</td>
+                <td class="fw">
+                    <a href="{{content.umbracoUrl}}" ng-click="close()">{{content.name}}</a><br/>
+                    <small>{{content.url}}</small>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

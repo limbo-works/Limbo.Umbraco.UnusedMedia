@@ -1,7 +1,4 @@
-﻿angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard", function ($http, $timeout, localizationService, overlayService) {
-
-    // Get the base URL for the API controller
-    const baseUrl = Umbraco.Sys.ServerVariables.umbracoSettings.umbracoPath + "/backoffice/Limbo/UnusedMedia/";
+﻿angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard", function ($timeout, localizationService, overlayService, unusedMediaService) {
 
     const vm = this;
 
@@ -9,10 +6,14 @@
 
     vm.params = {};
 
-    vm.prev = function () { };
+    vm.prev = function () {
+        if (!vm.pagination) return;
+        if (vm.pagination.page && vm.pagination.page > 1) vm.updateList(vm.pagination.page - 1);
+    };
 
-    vm.next = function() {
-
+    vm.next = function () {
+        if (!vm.pagination) return;
+        if (vm.pagination.page && vm.pagination.page < vm.pagination.pages) vm.updateList(vm.pagination.page + 1);
     };
 
     vm.updateList = function (page) {
@@ -25,7 +26,7 @@
             params: vm.params
         };
 
-        $http.get("/umbraco/backoffice/Limbo/UnusedMedia/GetItems", config).then(function(r) {
+        unusedMediaService.getUnusedMedia(config).then(function(r) {
 
             vm.loading = false;
             vm.loaded = true;
@@ -104,7 +105,7 @@
             view: "/App_Plugins/Limbo.Umbraco.UnusedMedia/Views/Overlays/Confirm.html",
             submit: function() {
                 options.submitButtonState = "busy";
-                $http.get(baseUrl + "TrashMedia?mediaId=" + media.id, { umbIgnoreErrors: true }).then(function() {
+                unusedMediaService.trashMedia(media.id).then(function() {
                     overlayService.close();
                 }, function () {
                     options.submitButtonState = "error";
@@ -123,7 +124,7 @@
 
         vm.loading = true;
 
-        $http.get("/umbraco/backoffice/Limbo/UnusedMedia/GetFilters").then(function(r) {
+        unusedMediaService.getFilters().then(function(r) {
 
             vm.filters = r.data;
 
