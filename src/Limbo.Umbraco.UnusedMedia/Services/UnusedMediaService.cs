@@ -16,7 +16,6 @@ using Skybrud.Essentials.Json.Extensions;
 using Skybrud.Essentials.Strings.Extensions;
 using Skybrud.Essentials.Time;
 using Umbraco.Core;
-using Umbraco.Core.Composing;
 using Umbraco.Core.IO;
 using Umbraco.Core.Models;
 using Umbraco.Core.Models.Editors;
@@ -25,6 +24,8 @@ using Umbraco.Core.Models.PublishedContent;
 using Umbraco.Core.PropertyEditors;
 using Umbraco.Core.Services;
 using Umbraco.Web;
+
+// ReSharper disable AssignNullToNotNullAttribute
 
 namespace Limbo.Umbraco.UnusedMedia.Services {
     
