@@ -32,10 +32,13 @@ namespace Limbo.Umbraco.UnusedMedia.Models {
         [JsonProperty("pages")]
         public int Pages { get; }
 
+        [JsonProperty("report")]
+        public object Report { get; }
+
         [JsonProperty("items")]
         public IEnumerable<UnusedMediaItem> Items { get; }
-        
-        public UnusedMediaResult(int total, int unused, int limit, int offset, int page, int pages, IEnumerable<UnusedMediaItem> items) {
+
+        public UnusedMediaResult(int total, int unused, int limit, int offset, int page, int pages, object report, IEnumerable<UnusedMediaItem> items) {
             
             Total = total;
             Unused = unused;
@@ -44,6 +47,7 @@ namespace Limbo.Umbraco.UnusedMedia.Models {
             Page = page;
             Pages = pages;
             Used = total - unused;
+            Report = report;
             Items = items;
             
             UnusedPercent = total == 0 ? -1 : unused / (double) total * 100;

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
+    <LangVersion>9.0</LangVersion>
   </PropertyGroup>
   
   <PropertyGroup>
@@ -26,10 +27,10 @@
     <PackageReference Include="Skybrud.Essentials" Version="1.1.30" />
     <PackageReference Include="Skybrud.Forms" Version="1.0.0-beta002" />
     <PackageReference Include="Skybrud.WebApi.Json" Version="1.0.4" />
-    <PackageReference Include="UmbracoCms.Core" Version="8.1.0">
+    <PackageReference Include="UmbracoCms.Core" Version="8.6.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="UmbracoCms.Web" Version="8.1.0">
+    <PackageReference Include="UmbracoCms.Web" Version="8.6.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>

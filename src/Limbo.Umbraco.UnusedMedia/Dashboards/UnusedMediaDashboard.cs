@@ -1,5 +1,4 @@
-﻿using System;
-using Limbo.Umbraco.UnusedMedia.Helpers;
+﻿using Limbo.Umbraco.UnusedMedia.Helpers;
 using Umbraco.Core.Dashboards;
 
 namespace Limbo.Umbraco.UnusedMedia.Dashboards {
@@ -14,7 +13,7 @@ namespace Limbo.Umbraco.UnusedMedia.Dashboards {
 
         public string View => $"/App_Plugins/Limbo.Umbraco.UnusedMedia/Views/Dashboard.html?v={_backoffice.GetCacheBuster()}";
 
-        public IAccessRule[] AccessRules => Array.Empty<IAccessRule>();
+        public IAccessRule[] AccessRules => _backoffice.GetDashboardAccessRules();
 
         public UnusedMediaDashboard(UnusedMediaBackOfficeHelper backoffice) {
             _backoffice = backoffice;

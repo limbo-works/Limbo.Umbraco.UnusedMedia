@@ -2,11 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using Limbo.Umbraco.UnusedMedia.Models.Api;
+using Limbo.Umbraco.UnusedMedia.Models.References;
 using Limbo.Umbraco.UnusedMedia.Services;
+using Lucene.Net.Support;
 using Skybrud.Essentials.Reflection;
 using Skybrud.Essentials.Strings;
 using Skybrud.Forms.Models.Fields;
 using Umbraco.Core;
+using Umbraco.Core.Dashboards;
+using Umbraco.Core.Models;
 using Umbraco.Core.Models.Membership;
 using Umbraco.Core.Models.PublishedContent;
 using Umbraco.Core.Services;
@@ -19,6 +24,7 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         private readonly IUserService _userService;
         private readonly ILocalizedTextService _localizedTextService;
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
+        private readonly UnusedMediaService _unusedMediaService;
 
         #region Properties
 
@@ -28,11 +34,12 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
 
         #region Constructors
 
-        public UnusedMediaBackOfficeHelper(IUserService userService, ILocalizedTextService localizedTextService, IUmbracoContextAccessor umbracoContextAccessor) {
+        public UnusedMediaBackOfficeHelper(IUserService userService, ILocalizedTextService localizedTextService, IUmbracoContextAccessor umbracoContextAccessor, UnusedMediaService unusedMediaService) {
             
             _userService = userService;
             _localizedTextService = localizedTextService;
             _umbracoContextAccessor = umbracoContextAccessor;
+            _unusedMediaService = unusedMediaService;
 
             DefaultListLimit = 15;
 
@@ -49,6 +56,14 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         /// <returns>The cache busting value.</returns>
         public string GetCacheBuster() {
             return ReflectionUtils.GetInformationalVersion(GetType().Assembly);
+        }
+        
+        /// <summary>
+        /// Returns the access rules for <see cref="UnusedMediaBackOfficeHelper"/>.
+        /// </summary>
+        /// <returns>An array of <see cref="IAccessRule"/>.</returns>
+        public virtual IAccessRule[] GetDashboardAccessRules() {
+            return Array.Empty<IAccessRule>();
         }
 
         /// <summary>
@@ -224,8 +239,21 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
                 .OrderBy(x => x.Name);
         }
 
+        /// <summary>
+        /// Returns the response of a request to get references of the specified <paramref name="child"/> media.
+        /// </summary>
+        /// <param name="child">The child of the relation/reference.</param>
+        /// <param name="user">The current backoffice user.</param>
+        /// <returns>An instance of <see cref="DeleteMediaResponse"/>.</returns>
+        public virtual DeleteMediaResponse GetReferencesByChild(IMedia child, IUser user) {
+
+            ReferenceResult result = _unusedMediaService.GetReferencesByChild(child, user);
+            
+            return new DeleteMediaResponse(result);
+
+        }
+
         #endregion
 
     }
-
 }

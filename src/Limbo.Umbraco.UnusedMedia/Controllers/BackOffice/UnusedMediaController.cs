@@ -3,13 +3,15 @@ using System.Net.Http;
 using System.Web.Http;
 using Limbo.Umbraco.UnusedMedia.Helpers;
 using Limbo.Umbraco.UnusedMedia.Models;
+using Limbo.Umbraco.UnusedMedia.Models.References;
 using Limbo.Umbraco.UnusedMedia.Services;
 using Skybrud.WebApi.Json;
 using Umbraco.Core.Models;
+using Umbraco.Core.Models.Membership;
 using Umbraco.Web.Mvc;
 using Umbraco.Web.WebApi;
 
-namespace Limbo.Umbraco.UnusedMedia.Controllers {
+namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice {
     
     [JsonOnlyConfiguration]
     [PluginController("Limbo")]
@@ -59,6 +61,42 @@ namespace Limbo.Umbraco.UnusedMedia.Controllers {
 
             // Send an OK response to the Angular dashboard
             return Request.CreateResponse(HttpStatusCode.NotFound);
+
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public object Rebuild() {
+            _unusedMediaService.BuildReportFromContentCache();
+            return new { success = true };
+        }
+        
+        [HttpGet]
+        public object GetReferencesById(int id, string type) {
+
+            // Get a reference to the current backoffice user
+            IUser user = Security.CurrentUser;
+            
+            switch (type) {
+
+                case "media":
+
+                    IMedia media = Services.MediaService.GetById(id);
+                    if (media == null) return Request.CreateResponse(HttpStatusCode.NotFound, "Media not found.");
+
+                    ReferenceResult result = _unusedMediaService.GetReferencesByChild(media, user);
+
+                    if (result.AllowDelete == false && string.IsNullOrWhiteSpace(result.NotAllowedMessage)) {
+                        result.NotAllowedMessage = "Du har ikke rettigheder til at slette det valgte medie.";
+                    }
+
+                    return result;
+
+                default:
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, $"Unsupported item type: {id}");
+                
+            }
+
 
         }
 
