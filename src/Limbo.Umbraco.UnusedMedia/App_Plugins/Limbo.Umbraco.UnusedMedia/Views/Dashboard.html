@@ -26,6 +26,9 @@
             ({{vm.stats.unusedPercent | number:2}}%)
             er ikke direkte i brug.
         </div>
+        <div class="stats-report" ng-if="vm.report.createDate" style="flex: 1; text-align: right;">
+            <span>Baseret på udtræk fra <strong>{{vm.report.createDate | date:'yyyy-MM-dd HH:mm'}}</strong></span>
+        </div>
     </div>
     <div class="items" ng-if="vm.loaded && vm.items.length > 0">
         <table class="table list">

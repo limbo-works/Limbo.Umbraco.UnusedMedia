@@ -36,6 +36,8 @@
             vm.stats = r.data;
             delete vm.stats.items;
 
+            vm.report = vm.stats.report;
+
             vm.pagination = {
                 from: vm.stats.offset + 1,
                 to: Math.min(vm.stats.offset + vm.stats.limit, vm.stats.unused),
