@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <LangVersion>9.0</LangVersion>
+    <ContentTargetFolders>content</ContentTargetFolders>
   </PropertyGroup>
   
   <PropertyGroup>
@@ -10,10 +11,11 @@
     <Authors>Anders Bjerner</Authors>
     <Company>Limbo</Company>
     <Description>Dashboard of unused media for Umbraco 8.</Description>
-    <Copyright>Copyright © 2021</Copyright>
+    <Copyright>Copyright © 2022</Copyright>
   </PropertyGroup>
   
   <PropertyGroup>
+    <Title>Limbo Unused Media</Title>
     <PackageId>Limbo.Umbraco.UnusedMedia</PackageId>
     <PackageTags>Umbraco, Unused media, Media, Limbo, Skybrud</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
