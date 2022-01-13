@@ -1,4 +1,4 @@
-﻿angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard", function ($timeout, localizationService, overlayService, unusedMediaService) {
+﻿angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard", function ($timeout, localizationService, overlayService, notificationsService, unusedMediaService) {
 
     const vm = this;
 
@@ -108,7 +108,10 @@
             submit: function() {
                 options.submitButtonState = "busy";
                 unusedMediaService.trashMedia(media.id).then(function() {
+                    options.submitButtonState = "success";
                     overlayService.close();
+                    notificationsService.success("Papirkurv", `Mediet ${media.name} er nu blevet flyttet til papirkurven.`);
+                    vm.updateList();
                 }, function () {
                     options.submitButtonState = "error";
                 });
