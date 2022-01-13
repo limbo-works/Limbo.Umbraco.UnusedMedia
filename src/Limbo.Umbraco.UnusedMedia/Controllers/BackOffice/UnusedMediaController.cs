@@ -60,7 +60,7 @@ namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice {
             Services.MediaService.MoveToRecycleBin(media, Security.CurrentUser.Id);
 
             // Send an OK response to the Angular dashboard
-            return Request.CreateResponse(HttpStatusCode.NotFound);
+            return Request.CreateResponse(HttpStatusCode.OK);
 
         }
 
