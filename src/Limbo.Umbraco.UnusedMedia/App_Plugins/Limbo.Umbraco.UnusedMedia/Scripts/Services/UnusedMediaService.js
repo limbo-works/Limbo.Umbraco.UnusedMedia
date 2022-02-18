@@ -1,9 +1,6 @@
 ﻿angular.module("umbraco.services").factory("unusedMediaService", function ($http) {
 
-    // Get the base URL for the API controller
-    const baseUrl = Umbraco.Sys.ServerVariables.umbracoSettings.umbracoPath + "/backoffice/Limbo/UnusedMedia/";
-
-    return {
+    const service = {
 
         /**
          * @ngdoc method
@@ -14,7 +11,7 @@
          * Returns the base URL for the API controller of this package.
          */
         getBaseUrl: function() {
-            return baseUrl;
+            return Umbraco.Sys.ServerVariables.umbracoSettings.umbracoPath + "/backoffice/Limbo/UnusedMedia/";
         },
 
         /**
@@ -42,7 +39,7 @@
          * @param {string} options.$filterName The value of a filter, if active. `$filterName` should be the alias of the filter.
          */
         getUnusedMedia: function(options) {
-            return $http.get(baseUrl + "GetItems", options);
+            return $http.get(service.getBaseUrl() + "GetItems", options);
         },
 
         /**
@@ -58,7 +55,7 @@
          * @param {string} options.type The type of the item - eg. `media`.
          */
         getReferencesById: function(options) {
-            return $http.get(baseUrl + "GetReferencesById", options);
+            return $http.get(service.getBaseUrl() + "GetReferencesById", options);
         },
 
         /**
@@ -70,7 +67,7 @@
          * Returns a list of available filters for the unused media dashboard.
          */
         getFilters: function() {
-            return $http.get(baseUrl + "GetFilters");
+            return $http.get(service.getBaseUrl() + "GetFilters");
         },
 
         /**
@@ -84,9 +81,11 @@
          * @param {number} mediaId The ID of the media to be trashed.
          */
         trashMedia: function(mediaId) {
-            return $http.get(baseUrl + "TrashMedia?mediaId=" + mediaId, { umbIgnoreErrors: true });
+            return $http.get(service.getBaseUrl() + "TrashMedia?mediaId=" + mediaId, { umbIgnoreErrors: true });
         }
 
     };
+     
+    return service;
 
 });
