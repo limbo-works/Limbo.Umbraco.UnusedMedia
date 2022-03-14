@@ -67,6 +67,11 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         public HashSet<int> IgnoredFolderIds { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to also generated a report for members referencing media. Default is <c>false</c>.
+        /// </summary>
+        public bool IncludeMembers { get; set; }
+
+        /// <summary>
         /// Gets or sets the maximum amount of results to be returned.
         /// </summary>
         public int Limit { get; set; }

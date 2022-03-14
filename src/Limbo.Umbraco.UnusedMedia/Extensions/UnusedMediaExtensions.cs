@@ -1,14 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Reflection;
+using Umbraco.Core.Models.PublishedContent;
+using Umbraco.Web.PublishedCache;
 
 namespace Limbo.Umbraco.UnusedMedia.Extensions {
 
     internal static class UnusedMediaExtensions {
 
-        public static HashSet<TOut> ToHashSet<TIn, TOut>(this IEnumerable<TIn> collection, Func<TIn, TOut> callback) {
-            // TODO: Use extension method from Skybrud.Essentials once v1.1.31 is released
-            return new HashSet<TOut>(collection.Select(callback));
+        internal static IEnumerable<IPublishedContent> GetAll(this IPublishedMemberCache publishedMemberCache)  {
+
+            // Get the method via reflection as the MemberCache class is internal
+            MethodInfo method = publishedMemberCache.GetType().GetMethod("GetAtRoot");
+
+            // Get all members from the member cache (which is really not cached)
+            return (IEnumerable<IPublishedContent>) method?.Invoke(publishedMemberCache, new object[] { false }) ?? Array.Empty<IPublishedContent>();
+
         }
 
     }

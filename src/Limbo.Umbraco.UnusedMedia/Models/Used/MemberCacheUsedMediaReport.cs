@@ -8,9 +8,9 @@ using Umbraco.Core.Models.PublishedContent;
 namespace Limbo.Umbraco.UnusedMedia.Models.Used {
     
     /// <summary>
-    /// Class representing a report over media in use in the content cache at the time the report was generated.
+    /// Class representing a report over media in use in the member cache at the time the report was generated.
     /// </summary>
-    public class ContentCacheUsedMediaReport : IUsedMediaReport {
+    public class MemberCacheUsedMediaReport : IUsedMediaReport {
 
         #region Properties
 
@@ -37,7 +37,7 @@ namespace Limbo.Umbraco.UnusedMedia.Models.Used {
         public TimeSpan Duration { get; }
         
         /// <summary>
-        /// Gets a dictionary over the media in use, and which content is referring to it.
+        /// Gets a dictionary over the media in use, and which member is referring to it.
         /// </summary>
         [JsonProperty("media")]
         public Dictionary<Guid, HashSet<Guid>> Media { get; }
@@ -46,7 +46,7 @@ namespace Limbo.Umbraco.UnusedMedia.Models.Used {
 
         #region Constructors
 
-        public ContentCacheUsedMediaReport(EssentialsTime start, EssentialsTime completed, TimeSpan duration, Dictionary<Guid, HashSet<Guid>> media) {
+        public MemberCacheUsedMediaReport(EssentialsTime start, EssentialsTime completed, TimeSpan duration, Dictionary<Guid, HashSet<Guid>> media) {
             Start = start;
             Completed = completed;
             Duration = duration;

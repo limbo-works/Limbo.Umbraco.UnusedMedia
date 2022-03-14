@@ -11,6 +11,7 @@ using Limbo.Umbraco.UnusedMedia.Models.Used;
 using Lucene.Net.Support;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Skybrud.Essentials.Collections.Extensions;
 using Skybrud.Essentials.Json;
 using Skybrud.Essentials.Json.Extensions;
 using Skybrud.Essentials.Strings.Extensions;
@@ -24,6 +25,7 @@ using Umbraco.Core.Models.PublishedContent;
 using Umbraco.Core.PropertyEditors;
 using Umbraco.Core.Services;
 using Umbraco.Web;
+using Umbraco.Web.PublishedCache;
 
 // ReSharper disable AssignNullToNotNullAttribute
 
@@ -35,19 +37,21 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         private readonly Lazy<PropertyEditorCollection> _propertyEditors;
         private readonly DataValueReferenceFactoryCollection _dataValueReferenceFactories;
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
+        private readonly IPublishedMemberCache _publishedMemberCache;
 
         #region Constructors
 
         public UnusedMediaService(IRelationService relationService,
             Lazy<PropertyEditorCollection> propertyEditors,
             DataValueReferenceFactoryCollection dataValueReferenceFactories,
-            IUmbracoContextAccessor umbracoContextAccessor) {
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedMemberCache publishedMemberCache) {
             
             _relationService = relationService;
             _propertyEditors = propertyEditors;
             _dataValueReferenceFactories = dataValueReferenceFactories;
             _umbracoContextAccessor = umbracoContextAccessor;
-
+            _publishedMemberCache = publishedMemberCache;
         }
 
         #endregion
@@ -121,6 +125,60 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
         }
 
+        public virtual MemberCacheUsedMediaReport BuildReportFromMemberCache()  {
+            
+            EssentialsTime start = EssentialsTime.UtcNow;
+
+            Stopwatch sw1 = Stopwatch.StartNew();
+            
+            // Get a collection of all members
+            IEnumerable<IPublishedContent> members = _publishedMemberCache.GetAll();
+
+            Dictionary<Guid, HashSet<Guid>> mediaToMember = new Dictionary<Guid, HashSet<Guid>>();
+
+            // Start by iterating through the members
+            foreach (IPublishedContent content in members) {
+
+                // Call the GetAllReferences method from this package to find all media references in "content"
+                foreach (UmbracoEntityReference reference in GetAllReferences(content)) {
+
+                    // For now, this logic only support GuidUdi's, so we should throw an exception if we encounter any other types
+                    if (reference.Udi is not GuidUdi guidUdi) throw new Exception($"UDI of type {reference.Udi.GetType()} not supported on page with key {content.Key}.");
+
+                    switch (reference.Udi.EntityType) {
+
+                        case Constants.UdiEntityType.Media:
+                            if (!mediaToMember.TryGetValue(guidUdi.Guid, out HashSet<Guid> list)) {
+                                mediaToMember.Add(guidUdi.Guid, list = new HashSet<Guid>());
+                            }
+                            list.Add(content.Key);
+                            break;
+                        
+                    }
+
+                }
+
+            }
+            
+            sw1.Stop();
+
+            EssentialsTime completed = EssentialsTime.UtcNow;
+
+            // Initialize a new report from the information gathered above
+            MemberCacheUsedMediaReport report = new MemberCacheUsedMediaReport(start, completed, sw1.Elapsed, mediaToMember);
+
+            // TODO: Should the file name include a timestamp so the history is kept on disk?
+
+            string path = IOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/MemberCacheUnusedMediaReport.json");
+
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+            JsonUtils.SaveJsonObject(path, JObject.FromObject(report), Formatting.Indented);
+
+            return report;
+
+        }
+
         /// <summary>
         /// Loads the most recent <see cref="ContentCacheUsedMediaReport"/>. If a report has not yet been generated, a <see cref="FileNotFoundException"/> will be thrown.
         /// </summary>
@@ -130,6 +188,26 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
             string path = IOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/ContentCacheUnusedMediaReport.json");
 
             if (!System.IO.File.Exists(path)) BuildReportFromContentCache();
+
+            return JsonUtils.LoadJsonObject(path, x => {
+                EssentialsTime start = x.GetString("start", EssentialsTime.Parse);
+                EssentialsTime completed = x.GetString("completed", EssentialsTime.Parse);
+                TimeSpan duration = x.GetDouble("duration", TimeSpan.FromSeconds);
+                Dictionary<Guid, HashSet<Guid>> media = x.GetValue("media").ToObject<Dictionary<Guid, HashSet<Guid>>>();
+                return new ContentCacheUsedMediaReport(start, completed, duration, media);
+            });
+
+        }
+
+        /// <summary>
+        /// Loads the most recent <see cref="ContentCacheUsedMediaReport"/>. If a report has not yet been generated, a <see cref="FileNotFoundException"/> will be thrown.
+        /// </summary>
+        /// <returns>An instance of <see cref="ContentCacheUsedMediaReport"/> representing most recent report.</returns>
+        public virtual ContentCacheUsedMediaReport LoadMembersCacheMediaReport() {
+            
+            string path = IOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/MembersCacheUnusedMediaReport.json");
+
+            if (!System.IO.File.Exists(path)) BuildReportFromMemberCache();
 
             return JsonUtils.LoadJsonObject(path, x => {
                 EssentialsTime start = x.GetString("start", EssentialsTime.Parse);
@@ -164,9 +242,19 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
         }
 
-        public virtual IUsedMediaReport GetUsedMediaReport() {
+        public virtual IUsedMediaReport GetUsedMediaReport(UnusedMediaOptions options) {
 
-            return new UsedMediaReport(LoadContentCacheMediaReport());
+            // Initialize a list of reports to check
+            List<IUsedMediaReport> reports = new() {
+                LoadContentCacheMediaReport()
+            };
+
+            // Should we include members?
+            if (options.IncludeMembers) {
+                reports.Add(LoadMembersCacheMediaReport());
+            }
+
+            return new UsedMediaReport(reports);
 
         }
 
@@ -175,7 +263,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
             options ??= new UnusedMediaOptions();
             
             // Load a report for 
-            IUsedMediaReport report = GetUsedMediaReport();
+            IUsedMediaReport report = GetUsedMediaReport(options);
 
             int total = 0;
 
@@ -228,10 +316,9 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
             int offset = (page - 1) * options.Limit;
 
-
             IEnumerable<UnusedMediaItem> items = temp.Skip(offset).Take(options.Limit).Select(CreateItem);
 
-            var summary = new UserMediaReportSummary(report);
+            UserMediaReportSummary summary = new UserMediaReportSummary(report);
 
             return new UnusedMediaResult(total, unused, limit, offset, page, pages, summary, items);
 

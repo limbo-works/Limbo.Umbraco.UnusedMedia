@@ -1,9 +1,11 @@
 ﻿using System.Net;
 using System.Net.Http;
+using System.Web;
 using System.Web.Http;
 using Limbo.Umbraco.UnusedMedia.Helpers;
 using Limbo.Umbraco.UnusedMedia.Models;
 using Limbo.Umbraco.UnusedMedia.Models.References;
+using Limbo.Umbraco.UnusedMedia.Models.Used;
 using Limbo.Umbraco.UnusedMedia.Services;
 using Skybrud.WebApi.Json;
 using Umbraco.Core.Models;
@@ -67,8 +69,28 @@ namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice {
         [HttpGet]
         [AllowAnonymous]
         public object Rebuild() {
+
+            // Get the options via the helper (method can be overriden)
+            UnusedMediaOptions options = _backOfficeHelper.GetOptions(UmbracoContext.HttpContext, Security.CurrentUser);
+
             _unusedMediaService.BuildReportFromContentCache();
+            
+            if (options.IncludeMembers) _unusedMediaService.BuildReportFromMemberCache();
+            
             return new { success = true };
+
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public object RebuildMembers() {
+            MemberCacheUsedMediaReport report = _unusedMediaService.BuildReportFromMemberCache();
+            return new {
+                success = true,
+                start = report.Start,
+                completed = report.Completed,
+                duration = report.Duration.TotalMilliseconds
+            };
         }
         
         [HttpGet]
