@@ -26,7 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Skybrud.Essentials" Version="1.1.30" />
+    <PackageReference Include="Skybrud.Essentials" Version="1.1.37" />
     <PackageReference Include="Skybrud.Forms" Version="1.0.0-beta002" />
     <PackageReference Include="Skybrud.WebApi.Json" Version="1.0.4" />
     <PackageReference Include="UmbracoCms.Core" Version="8.6.0">
