@@ -183,6 +183,13 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
             foreach (IPublishedContent media in _umbracoContextAccessor.UmbracoContext.Media.GetAtRoot()) {
 
+                // Skip media if a part of their path is ignored
+                if (options.IgnoredFolderIds is { Count: > 0 }) {
+                    if (media.Path.ToInt32Array().Any(x => options.IgnoredFolderIds.Contains(x))) {
+                        continue;
+                    }
+                }
+
                 // Handle non-folder media types at the root level
                 if (IsMatch(media, options)) {
 

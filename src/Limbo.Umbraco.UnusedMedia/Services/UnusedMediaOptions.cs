@@ -61,6 +61,12 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         public bool HasWriterIds => WriterIds != null && WriterIds.Length > 0;
 
         /// <summary>
+        /// Gets or sets a collection of folder IDs that should be ignored. If one of these IDs are in the path of a
+        /// given media, the media will be excluded in the list of unused media.
+        /// </summary>
+        public HashSet<int> IgnoredFolderIds { get; set; }
+
+        /// <summary>
         /// Gets or sets the maximum amount of results to be returned.
         /// </summary>
         public int Limit { get; set; }
@@ -75,6 +81,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         #region Constructors
 
         public UnusedMediaOptions() {
+            IgnoredFolderIds = new HashSet<int>();
             Limit = 15;
             Page = 1;
         }
