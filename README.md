@@ -4,7 +4,17 @@ Unused media dashboard for Umbraco 8.
 
 ## Installation
 
-*Still under development, so no NuGet package yet 😢*
+Via <a href="https://www.nuget.org/packages/Limbo.Umbraco.UnusedMedia/1.0.0-beta004" target="_blank">NuGet</a>:
+
+```
+dotnet add package Limbo.Umbraco.UnusedMedia --version 1.0.0-beta004
+```
+
+or:
+
+```
+Install-Package Limbo.Umbraco.UnusedMedia -Version 1.0.0-beta004
+```
 
 ## Usage
 
