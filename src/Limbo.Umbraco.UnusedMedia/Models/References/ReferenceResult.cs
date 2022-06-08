@@ -3,7 +3,7 @@ using System.Linq;
 using Newtonsoft.Json;
 
 namespace Limbo.Umbraco.UnusedMedia.Models.References {
-    
+
     public class ReferenceResult {
 
         /// <summary>

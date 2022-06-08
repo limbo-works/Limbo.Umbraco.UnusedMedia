@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Skybrud.Essentials.Time;
-using Umbraco.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Limbo.Umbraco.UnusedMedia.Models.Used {
-    
+
     public class UsedMediaReport : IUsedMediaReport {
 
         private readonly List<IUsedMediaReport> _reports = new();

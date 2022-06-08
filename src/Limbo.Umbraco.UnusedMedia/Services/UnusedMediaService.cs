@@ -8,7 +8,6 @@ using Limbo.Umbraco.UnusedMedia.Extensions;
 using Limbo.Umbraco.UnusedMedia.Models;
 using Limbo.Umbraco.UnusedMedia.Models.References;
 using Limbo.Umbraco.UnusedMedia.Models.Used;
-using Lucene.Net.Support;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Skybrud.Essentials.Collections.Extensions;
@@ -16,28 +15,30 @@ using Skybrud.Essentials.Json;
 using Skybrud.Essentials.Json.Extensions;
 using Skybrud.Essentials.Strings.Extensions;
 using Skybrud.Essentials.Time;
-using Umbraco.Core;
-using Umbraco.Core.IO;
-using Umbraco.Core.Models;
-using Umbraco.Core.Models.Editors;
-using Umbraco.Core.Models.Membership;
-using Umbraco.Core.Models.PublishedContent;
-using Umbraco.Core.PropertyEditors;
-using Umbraco.Core.Services;
-using Umbraco.Web;
-using Umbraco.Web.PublishedCache;
+using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.IO;
+using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Models.Editors;
+using Umbraco.Cms.Core.Models.Membership;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PropertyEditors;
+using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Web;
+using Umbraco.Extensions;
 
 // ReSharper disable AssignNullToNotNullAttribute
 
 namespace Limbo.Umbraco.UnusedMedia.Services {
-    
+
     public class UnusedMediaService {
-        
+
         private readonly IRelationService _relationService;
         private readonly Lazy<PropertyEditorCollection> _propertyEditors;
         private readonly DataValueReferenceFactoryCollection _dataValueReferenceFactories;
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IPublishedMemberCache _publishedMemberCache;
+        private readonly IOHelper _iOHelper;
 
         #region Constructors
 
@@ -45,13 +46,15 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
             Lazy<PropertyEditorCollection> propertyEditors,
             DataValueReferenceFactoryCollection dataValueReferenceFactories,
             IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedMemberCache publishedMemberCache) {
-            
+            IPublishedMemberCache publishedMemberCache,
+            IOHelper iOHelper) {
+
             _relationService = relationService;
             _propertyEditors = propertyEditors;
             _dataValueReferenceFactories = dataValueReferenceFactories;
             _umbracoContextAccessor = umbracoContextAccessor;
             _publishedMemberCache = publishedMemberCache;
+            _iOHelper = iOHelper;
         }
 
         #endregion
@@ -70,15 +73,19 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         /// </summary>
         /// <returns>An instance of <see cref="ContentCacheUsedMediaReport"/> representing the generated report.</returns>
         public virtual ContentCacheUsedMediaReport BuildReportFromContentCache() {
-            
+
             EssentialsTime start = EssentialsTime.UtcNow;
 
             Stopwatch sw1 = Stopwatch.StartNew();
 
             Dictionary<Guid, HashSet<Guid>> mediaToContent = new Dictionary<Guid, HashSet<Guid>>();
 
+            if (!_umbracoContextAccessor.TryGetUmbracoContext(out var umbracoContext)) {
+                return null;
+            }
+
             // Start by iterating through the root nodes of the content cache
-            foreach (IPublishedContent root in _umbracoContextAccessor.UmbracoContext.Content.GetAtRoot()) {
+            foreach (IPublishedContent root in umbracoContext.Content.GetAtRoot()) {
 
                 // Get all descendant nodes, including the rode node it self
                 foreach (IPublishedContent content in root.DescendantsOrSelf()) {
@@ -87,7 +94,9 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
                     foreach (UmbracoEntityReference reference in GetAllReferences(content)) {
 
                         // For now, this logic only support GuidUdi's, so we should throw an exception if we encounter any other types
-                        if (reference.Udi is not GuidUdi guidUdi) throw new Exception($"UDI of type {reference.Udi.GetType()} not supported on page with key {content.Key}.");
+                        if (reference.Udi is not GuidUdi guidUdi) {
+                            throw new Exception($"UDI of type {reference.Udi.GetType()} not supported on page with key {content.Key}.");
+                        }
 
                         switch (reference.Udi.EntityType) {
 
@@ -97,7 +106,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
                                 }
                                 list.Add(content.Key);
                                 break;
-                            
+
                         }
 
                     }
@@ -105,7 +114,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
                 }
 
             }
-            
+
             sw1.Stop();
 
             EssentialsTime completed = EssentialsTime.UtcNow;
@@ -115,7 +124,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
             // TODO: Should the file name include a timestamp so the history is kept on disk?
 
-            string path = IOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/ContentCacheUnusedMediaReport.json");
+            string path = _iOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/ContentCacheUnusedMediaReport.json");
 
             Directory.CreateDirectory(Path.GetDirectoryName(path));
 
@@ -125,12 +134,12 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
         }
 
-        public virtual MemberCacheUsedMediaReport BuildReportFromMemberCache()  {
-            
+        public virtual MemberCacheUsedMediaReport BuildReportFromMemberCache() {
+
             EssentialsTime start = EssentialsTime.UtcNow;
 
             Stopwatch sw1 = Stopwatch.StartNew();
-            
+
             // Get a collection of all members
             IEnumerable<IPublishedContent> members = _publishedMemberCache.GetAll();
 
@@ -143,7 +152,9 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
                 foreach (UmbracoEntityReference reference in GetAllReferences(content)) {
 
                     // For now, this logic only support GuidUdi's, so we should throw an exception if we encounter any other types
-                    if (reference.Udi is not GuidUdi guidUdi) throw new Exception($"UDI of type {reference.Udi.GetType()} not supported on page with key {content.Key}.");
+                    if (reference.Udi is not GuidUdi guidUdi) {
+                        throw new Exception($"UDI of type {reference.Udi.GetType()} not supported on page with key {content.Key}.");
+                    }
 
                     switch (reference.Udi.EntityType) {
 
@@ -153,13 +164,13 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
                             }
                             list.Add(content.Key);
                             break;
-                        
+
                     }
 
                 }
 
             }
-            
+
             sw1.Stop();
 
             EssentialsTime completed = EssentialsTime.UtcNow;
@@ -169,7 +180,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
             // TODO: Should the file name include a timestamp so the history is kept on disk?
 
-            string path = IOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/MemberCacheUnusedMediaReport.json");
+            string path = _iOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/MemberCacheUnusedMediaReport.json");
 
             Directory.CreateDirectory(Path.GetDirectoryName(path));
 
@@ -184,10 +195,12 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         /// </summary>
         /// <returns>An instance of <see cref="ContentCacheUsedMediaReport"/> representing most recent report.</returns>
         public virtual ContentCacheUsedMediaReport LoadContentCacheMediaReport() {
-            
-            string path = IOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/ContentCacheUnusedMediaReport.json");
 
-            if (!System.IO.File.Exists(path)) BuildReportFromContentCache();
+            string path = _iOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/ContentCacheUnusedMediaReport.json");
+
+            if (!System.IO.File.Exists(path)) {
+                BuildReportFromContentCache();
+            }
 
             return JsonUtils.LoadJsonObject(path, x => {
                 EssentialsTime start = x.GetString("start", EssentialsTime.Parse);
@@ -204,10 +217,12 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         /// </summary>
         /// <returns>An instance of <see cref="ContentCacheUsedMediaReport"/> representing most recent report.</returns>
         public virtual ContentCacheUsedMediaReport LoadMembersCacheMediaReport() {
-            
-            string path = IOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/MembersCacheUnusedMediaReport.json");
 
-            if (!System.IO.File.Exists(path)) BuildReportFromMemberCache();
+            string path = _iOHelper.MapPath($"{UnusedMediaConstans.Directories.AppData}/MembersCacheUnusedMediaReport.json");
+
+            if (!System.IO.File.Exists(path)) {
+                BuildReportFromMemberCache();
+            }
 
             return JsonUtils.LoadJsonObject(path, x => {
                 EssentialsTime start = x.GetString("start", EssentialsTime.Parse);
@@ -230,8 +245,10 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
             // Look up the build-in relation type
             IRelationType releationType = _relationService.GetRelationTypeByAlias("umbMedia");
-            if (releationType == null) throw new Exception("Relation type with alias \"umbMedia\" not found.");
-            
+            if (releationType == null) {
+                throw new Exception("Relation type with alias \"umbMedia\" not found.");
+            }
+
             // Create a new hash set of media that are already in use
             HashSet<int> usedMedia = _relationService
                 .GetAllRelationsByRelationType(releationType.Id)
@@ -261,7 +278,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         public virtual UnusedMediaResult GetUnusedMedia(UnusedMediaOptions options) {
 
             options ??= new UnusedMediaOptions();
-            
+
             // Load a report for 
             IUsedMediaReport report = GetUsedMediaReport(options);
 
@@ -269,7 +286,11 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
             List<IPublishedContent> temp = new List<IPublishedContent>();
 
-            foreach (IPublishedContent media in _umbracoContextAccessor.UmbracoContext.Media.GetAtRoot()) {
+            if (!_umbracoContextAccessor.TryGetUmbracoContext(out var umbracoContext)) {
+                return null;
+            }
+
+            foreach (IPublishedContent media in umbracoContext.Media.GetAtRoot()) {
 
                 // Skip media if a part of their path is ignored
                 if (options.IgnoredFolderIds is { Count: > 0 }) {
@@ -285,23 +306,30 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
                     total++;
 
                     // Append the media to the list of not in use
-                    if (!report.IsInUse(media)) temp.Add(media);
-
+                    if (!report.IsInUse(media)) {
+                        temp.Add(media);
+                    }
                 }
 
                 // Iterate through all the descendants
                 foreach (IPublishedContent descendant in media.Descendants()) {
 
-                    if (!IsMatch(descendant, options)) continue;
+                    if (!IsMatch(descendant, options)) {
+                        continue;
+                    }
 
                     // Skip if a folder
-                    if (descendant.ContentType.Alias == Constants.Conventions.MediaTypes.Folder) continue;
-                    
+                    if (descendant.ContentType.Alias == Constants.Conventions.MediaTypes.Folder) {
+                        continue;
+                    }
+
                     // Increment the total count regardless of if the media is in use or not
                     total++;
 
                     // Skip if in use
-                    if (report.IsInUse(descendant)) continue;
+                    if (report.IsInUse(descendant)) {
+                        continue;
+                    }
 
                     temp.Add(descendant);
 
@@ -331,18 +359,29 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         /// <param name="options">The options.</param>
         /// <returns><c>true</c> if <paramref name="media"/> matches <paramref name="options"/>; otherwise <c>false</c>.</returns>
         protected virtual bool IsMatch(IPublishedContent media, UnusedMediaOptions options) {
-            
+
             // Always ignore folders
-            if (media.ContentType.Alias == Constants.Conventions.MediaTypes.Folder) return false;
+            if (media.ContentType.Alias == Constants.Conventions.MediaTypes.Folder) {
+                return false;
+            }
 
             // Ignore media not within "Path" if the filter is specified
-            if (options.HasPath &&  !media.Path.ToInt32Array().Any(options.IsInPath)) return false;
+            if (options.HasPath && !media.Path.ToInt32Array().Any(options.IsInPath)) {
+                return false;
+            }
 
-            if (options.HasCreatorIds && !options.HasCreator(media.CreatorId)) return false;
-            if (options.HasWriterIds && !options.HasWriter(media.WriterId)) return false;
-            
+            if (options.HasCreatorIds && !options.HasCreator(media.CreatorId)) {
+                return false;
+            }
+
+            if (options.HasWriterIds && !options.HasWriter(media.WriterId)) {
+                return false;
+            }
+
             // Ignore media whose names does not include the specified text
-            if (!string.IsNullOrWhiteSpace(options.Text) && !media.Name.InvariantContains(options.Text)) return false;
+            if (!string.IsNullOrWhiteSpace(options.Text) && !media.Name.InvariantContains(options.Text)) {
+                return false;
+            }
 
             return true;
 
@@ -409,17 +448,19 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         /// <param name="value">The string value to check for media UDI references.</param>
         /// <param name="references">The list to which the references should be added.</param>
         protected virtual void GetReferences(string value, List<UmbracoEntityReference> references) {
-        
-            if (string.IsNullOrWhiteSpace(value)) return;
+
+            if (string.IsNullOrWhiteSpace(value)) {
+                return;
+            }
 
             foreach (Match image in Regex.Matches(value, @"(umb:\/\/media\/[0-9A-Fa-f]{32})")) {
-                if (Udi.TryParse(image.Value, out Udi udi)) {
+                if (UdiParser.TryParse(image.Value, out Udi udi)) {
                     references.Add(new UmbracoEntityReference(udi));
                 }
             }
 
         }
-        
+
         /// <summary>
         /// Returns a list of content items which references the specified media<paramref name="child"/>.
         /// </summary>
@@ -427,16 +468,18 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         /// <returns>An array of <see cref="ContentReference"/> representing the content items that references <paramref name="child"/>.</returns>
         public virtual ContentReference[] GetContentReferencesByChild(IMedia child) {
 
+            if (!_umbracoContextAccessor.TryGetUmbracoContext(out var umbracoContext)) {
+                return null;
+            }
+
             // Get the relations tracked by Umbraco
-            IEnumerable<IPublishedContent> umbracoRelations = _relationService
+            IEnumerable<IPublishedContent> umbracoRelations = Skybrud.Essentials.Collections.Extensions.EnumerableExtensions.WhereNotNull(_relationService
                 .GetByChildId(child.Id, Constants.Conventions.RelationTypes.RelatedMediaAlias)
-                .Select(x => _umbracoContextAccessor.UmbracoContext.Content.GetById(x.ParentId))
-                .WhereNotNull();
+                .Select(x => umbracoContext.Content.GetById(x.ParentId)));
 
             // Gets the references from our unused media package
-            IEnumerable<IPublishedContent> limboReferences =  LoadContentCacheMediaReport()
-                .GetContentKeys(child).Select(x => _umbracoContextAccessor.UmbracoContext.Content.GetById(x))
-                .WhereNotNull();
+            IEnumerable<IPublishedContent> limboReferences = Skybrud.Essentials.Collections.Extensions.EnumerableExtensions.WhereNotNull(LoadContentCacheMediaReport()
+                .GetContentKeys(child).Select(x => umbracoContext.Content.GetById(x)));
 
             // Merge the two result sets
             return umbracoRelations.Union(limboReferences)
@@ -447,7 +490,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
 
         public virtual ReferenceResult GetReferencesByChild(IMedia child, IUser user) {
 
-            List<ReferenceGroup> temp = new EquatableList<ReferenceGroup>();
+            List<ReferenceGroup> temp = new();
 
             ContentReference[] content = GetContentReferencesByChild(child);
 
@@ -459,7 +502,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
                     References = content
                 });
             }
-            
+
             return new ReferenceResult(temp);
 
         }

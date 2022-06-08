@@ -1,12 +1,12 @@
 ﻿using Limbo.Umbraco.UnusedMedia.Helpers;
-using Umbraco.Core.Dashboards;
+using Umbraco.Cms.Core.Dashboards;
 
 namespace Limbo.Umbraco.UnusedMedia.Dashboards {
-    
+
     public class UnusedMediaDashboard : IDashboard {
-        
+
         private readonly UnusedMediaBackOfficeHelper _backoffice;
-        
+
         public string Alias => "unusedMedia";
 
         public string[] Sections => new[] { "content" };

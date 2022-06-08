@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Umbraco.Core.Models.PublishedContent;
-using Umbraco.Web.PublishedCache;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PublishedCache;
 
 namespace Limbo.Umbraco.UnusedMedia.Extensions {
 
     internal static class UnusedMediaExtensions {
 
-        internal static IEnumerable<IPublishedContent> GetAll(this IPublishedMemberCache publishedMemberCache)  {
+        internal static IEnumerable<IPublishedContent> GetAll(this IPublishedMemberCache publishedMemberCache) {
 
             // Get the method via reflection as the MemberCache class is internal
             MethodInfo method = publishedMemberCache.GetType().GetMethod("GetAtRoot");

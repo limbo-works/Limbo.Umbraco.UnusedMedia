@@ -1,17 +1,17 @@
 ﻿using Limbo.Umbraco.UnusedMedia.Helpers;
 using Limbo.Umbraco.UnusedMedia.Services;
-using Umbraco.Core;
-using Umbraco.Core.Composing;
+using Microsoft.Extensions.DependencyInjection;
+using Umbraco.Cms.Core.Composing;
+using Umbraco.Cms.Core.DependencyInjection;
 
 namespace Limbo.Umbraco.UnusedMedia.Composers {
 
-    public class UnusedMediaComposer : IUserComposer {
-        
-        public void Compose(Composition composition) {
-            composition.Register<UnusedMediaService>();
-            composition.Register<UnusedMediaBackOfficeHelper>();
-        }
+    public class UnusedMediaComposer : IComposer {
 
+        public void Compose(IUmbracoBuilder builder) {
+            builder.Services.AddTransient<UnusedMediaService>();
+            builder.Services.AddTransient<UnusedMediaBackOfficeHelper>();
+        }
     }
 
 }

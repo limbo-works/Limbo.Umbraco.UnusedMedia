@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Skybrud.Essentials.Time;
-using Umbraco.Core.Models;
-using Umbraco.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Limbo.Umbraco.UnusedMedia.Models.Used {
-    
+
     /// <summary>
     /// Class representing a report over media in use in the member cache at the time the report was generated.
     /// </summary>
@@ -25,17 +25,17 @@ namespace Limbo.Umbraco.UnusedMedia.Models.Used {
         /// </summary>
         [JsonProperty("completed")]
         public EssentialsTime Completed { get; }
-        
+
         [JsonProperty("createDate")]
         public EssentialsTime CreateDate => Completed;
-        
+
         /// <summary>
         /// Gets the time it took to generate the report.
         /// </summary>
         [JsonProperty("duration")]
         [JsonConverter(typeof(Skybrud.Essentials.Json.Converters.Time.TimeSpanSecondsConverter))]
         public TimeSpan Duration { get; }
-        
+
         /// <summary>
         /// Gets a dictionary over the media in use, and which member is referring to it.
         /// </summary>
@@ -63,10 +63,13 @@ namespace Limbo.Umbraco.UnusedMedia.Models.Used {
         /// <param name="media">The media.</param>
         /// <returns>An instance of <see cref="HashSet{Guid}"/> representing the content keys.</returns>
         public HashSet<Guid> GetContentKeys(IMedia media) {
-            if (media == null) throw new ArgumentNullException(nameof(media));
+            if (media == null) {
+                throw new ArgumentNullException(nameof(media));
+            }
+
             return GetContentKeys(media.Key);
         }
-        
+
         /// <summary>
         /// Returns an array with the keys of the content nodes referring to the media with the specified <paramref name="mediaKey"/>.
         /// </summary>

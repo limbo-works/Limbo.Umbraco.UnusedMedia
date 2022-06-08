@@ -1,49 +1,54 @@
-﻿using System.Net;
-using System.Net.Http;
-using System.Web;
-using System.Web.Http;
-using Limbo.Umbraco.UnusedMedia.Helpers;
+﻿using Limbo.Umbraco.UnusedMedia.Helpers;
 using Limbo.Umbraco.UnusedMedia.Models;
 using Limbo.Umbraco.UnusedMedia.Models.References;
 using Limbo.Umbraco.UnusedMedia.Models.Used;
 using Limbo.Umbraco.UnusedMedia.Services;
-using Skybrud.WebApi.Json;
-using Umbraco.Core.Models;
-using Umbraco.Core.Models.Membership;
-using Umbraco.Web.Mvc;
-using Umbraco.Web.WebApi;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Models.Membership;
+using Umbraco.Cms.Core.Security;
+using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Web.BackOffice.Controllers;
+using Umbraco.Cms.Web.Common.Attributes;
 
 namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice {
-    
-    [JsonOnlyConfiguration]
+
     [PluginController("Limbo")]
     public class UnusedMediaController : UmbracoAuthorizedApiController {
-        
+
         private readonly UnusedMediaService _unusedMediaService;
         private readonly UnusedMediaBackOfficeHelper _backOfficeHelper;
+        private readonly IMediaService _mediaService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
 
         #region Contructors
 
-        public UnusedMediaController(UnusedMediaService unusedMediaService, UnusedMediaBackOfficeHelper backOfficeHelper) {
+        public UnusedMediaController(UnusedMediaService unusedMediaService, UnusedMediaBackOfficeHelper backOfficeHelper, IMediaService mediaService, IHttpContextAccessor httpContextAccessor, IBackOfficeSecurityAccessor backOfficeSecurityAccessor) {
             _unusedMediaService = unusedMediaService;
             _backOfficeHelper = backOfficeHelper;
+            _mediaService = mediaService;
+            _httpContextAccessor = httpContextAccessor;
+            _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
         }
 
         #endregion
 
         #region Public API methods
-        
+
         [HttpGet]
         public object GetFilters() {
-            return _backOfficeHelper.GetFilters(UmbracoContext.HttpContext, Security.CurrentUser);
+            return _backOfficeHelper.GetFilters(_httpContextAccessor.HttpContext, _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser);
         }
-        
+
         [HttpGet]
         public object GetItems() {
 
             // Get the options via the helper (method can be overriden)
-            UnusedMediaOptions options = _backOfficeHelper.GetOptions(UmbracoContext.HttpContext, Security.CurrentUser);
-            
+            UnusedMediaOptions options = _backOfficeHelper.GetOptions(_httpContextAccessor.HttpContext, _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser);
+
             // Get the result from the unused media service
             UnusedMediaResult result = _unusedMediaService.GetUnusedMedia(options);
 
@@ -55,14 +60,16 @@ namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice {
         public object TrashMedia(int mediaId) {
 
             // Get the media by it's ID
-            IMedia media = Services.MediaService.GetById(mediaId);
-            if (media == null) return Request.CreateResponse(HttpStatusCode.NotFound);
+            IMedia media = _mediaService.GetById(mediaId);
+            if (media == null) {
+                return NotFound();
+            }
 
             // Move the media to the recycle bind (on behalf of the current user)
-            Services.MediaService.MoveToRecycleBin(media, Security.CurrentUser.Id);
+            _mediaService.MoveToRecycleBin(media, _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser.Id);
 
             // Send an OK response to the Angular dashboard
-            return Request.CreateResponse(HttpStatusCode.OK);
+            return Ok();
 
         }
 
@@ -71,12 +78,14 @@ namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice {
         public object Rebuild() {
 
             // Get the options via the helper (method can be overriden)
-            UnusedMediaOptions options = _backOfficeHelper.GetOptions(UmbracoContext.HttpContext, Security.CurrentUser);
+            UnusedMediaOptions options = _backOfficeHelper.GetOptions(_httpContextAccessor.HttpContext, _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser);
 
             _unusedMediaService.BuildReportFromContentCache();
-            
-            if (options.IncludeMembers) _unusedMediaService.BuildReportFromMemberCache();
-            
+
+            if (options.IncludeMembers) {
+                _unusedMediaService.BuildReportFromMemberCache();
+            }
+
             return new { success = true };
 
         }
@@ -92,19 +101,21 @@ namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice {
                 duration = report.Duration.TotalMilliseconds
             };
         }
-        
+
         [HttpGet]
         public object GetReferencesById(int id, string type) {
 
             // Get a reference to the current backoffice user
-            IUser user = Security.CurrentUser;
-            
+            IUser user = _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser;
+
             switch (type) {
 
                 case "media":
 
-                    IMedia media = Services.MediaService.GetById(id);
-                    if (media == null) return Request.CreateResponse(HttpStatusCode.NotFound, "Media not found.");
+                    IMedia media = _mediaService.GetById(id);
+                    if (media == null) {
+                        return NotFound("Media not found.");
+                    }
 
                     ReferenceResult result = _unusedMediaService.GetReferencesByChild(media, user);
 
@@ -115,8 +126,8 @@ namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice {
                     return result;
 
                 default:
-                    return Request.CreateResponse(HttpStatusCode.BadRequest, $"Unsupported item type: {id}");
-                
+                    return BadRequest($"Unsupported item type: {id}");
+
             }
 
 

@@ -4,16 +4,16 @@ using Limbo.Umbraco.UnusedMedia.Models.References;
 using Newtonsoft.Json;
 
 namespace Limbo.Umbraco.UnusedMedia.Models.Api {
-    
+
     public class DeleteMediaResponse {
-        
+
         /// <summary>
         /// Gets or sets whether the user is allowed to delete (trash) a given media. If set to <c>false</c>, the
         /// confirm button will be disabled in the UI. Default is <c>true</c>.
         /// </summary>
         [JsonProperty("allowDelete")]
         public bool AllowDelete { get; set; }
-        
+
         /// <summary>
         /// Gets or sets whether the user should be prompted with a <strong>I know what I'm doing</strong> toggle
         /// before being able to click the confirm button. The toggle is only shown when <see cref="AllowDelete"/> is

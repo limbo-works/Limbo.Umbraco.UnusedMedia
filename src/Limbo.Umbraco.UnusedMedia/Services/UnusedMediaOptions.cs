@@ -2,7 +2,7 @@
 using System.Linq;
 
 namespace Limbo.Umbraco.UnusedMedia.Services {
-    
+
     public class UnusedMediaOptions {
 
         private int[] _path;
@@ -75,7 +75,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         /// Gets or sets the maximum amount of results to be returned.
         /// </summary>
         public int Limit { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the page to be returned.
         /// </summary>

@@ -1,7 +1,7 @@
 ﻿using Skybrud.Essentials.Reflection;
 
 namespace Limbo.Umbraco.UnusedMedia {
-    
+
     public static class UnusedMediaConstans {
 
         public static readonly string Version = ReflectionUtils.GetInformationalVersion(typeof(UnusedMediaConstans).Assembly);

@@ -2,8 +2,8 @@
 using Newtonsoft.Json;
 using Skybrud.Essentials.Strings.Extensions;
 using Skybrud.Essentials.Time;
-using Umbraco.Core.Models.PublishedContent;
-using Umbraco.Web;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Extensions;
 
 namespace Limbo.Umbraco.UnusedMedia.Models.References {
 
@@ -11,19 +11,19 @@ namespace Limbo.Umbraco.UnusedMedia.Models.References {
 
         [JsonProperty("id")]
         public int Id { get; }
-        
+
         [JsonProperty("key")]
         public Guid Key { get; }
-        
+
         [JsonProperty("name")]
         public string Name { get; }
-        
+
         [JsonProperty("url")]
         public string Url { get; }
-        
+
         [JsonProperty("umbracoUrl")]
         public string UmbracoUrl { get; }
-        
+
         [JsonProperty("updateDate")]
         public EssentialsTime UpdateDate { get; }
 

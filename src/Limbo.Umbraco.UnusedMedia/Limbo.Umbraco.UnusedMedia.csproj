@@ -1,21 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
     <LangVersion>9.0</LangVersion>
+    <TargetFramework>net5.0</TargetFramework>
     <ContentTargetFolders>content</ContentTargetFolders>
   </PropertyGroup>
-  
+
   <PropertyGroup>
-    <Version>1.0.0-beta004</Version>
-    <Authors>Anders Bjerner</Authors>
+    <Version>2.0.0-beta001</Version>
     <Company>Limbo</Company>
-    <Description>Dashboard of unused media for Umbraco 8.</Description>
+    <Authors>Anders Bjerner</Authors>
     <Copyright>Copyright © 2022</Copyright>
+    <Description>Dashboard of unused media for Umbraco 9.</Description>
   </PropertyGroup>
-  
+
+  <!-- Information for the NuGet package -->
   <PropertyGroup>
-    <Title>Limbo Unused Media</Title>
     <PackageId>Limbo.Umbraco.UnusedMedia</PackageId>
     <PackageTags>Umbraco, Unused media, Media, Limbo, Skybrud</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -25,18 +27,16 @@
     <RepositoryUrl>https://github.com/limbo-works/Limbo.Umbraco.UnusedMedia</RepositoryUrl>
   </PropertyGroup>
 
+  <!-- Include NuGet dependencies -->
   <ItemGroup>
-    <PackageReference Include="Skybrud.Essentials" Version="1.1.37" />
-    <PackageReference Include="Skybrud.Forms" Version="1.0.0-beta002" />
-    <PackageReference Include="Skybrud.WebApi.Json" Version="1.0.4" />
-    <PackageReference Include="UmbracoCms.Core" Version="8.6.0">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="UmbracoCms.Web" Version="8.6.0">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="Skybrud.Essentials" Version="1.1.41" />
+    <PackageReference Include="Skybrud.Forms" Version="1.0.0-beta003" />
+    <PackageReference Include="Umbraco.Cms.Core" Version="9.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="9.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="9.0.0" />
   </ItemGroup>
-  
+
+  <!-- Include backoffice assets -->
   <ItemGroup>
     <Content Include="App_Plugins\Limbo.Umbraco.UnusedMedia\**\*.css" />
     <Content Include="App_Plugins\Limbo.Umbraco.UnusedMedia\**\*.html" />
@@ -44,18 +44,20 @@
     <Content Include="App_Plugins\Limbo.Umbraco.UnusedMedia\Lang\*.xml" />
     <Content Include="App_Plugins\Limbo.Umbraco.UnusedMedia\package.manifest" />
   </ItemGroup>
-  
+
+  <!-- Include the targets file -->
   <ItemGroup>
-    <Content Update="App_Plugins\Limbo.Umbraco.UnusedMedia\Styles\Styles.css">
-      <DependentUpon>Styles.less</DependentUpon>
-    </Content>
-    <Content Update="App_Plugins\Limbo.Umbraco.UnusedMedia\Styles\Styles.min.css">
-      <DependentUpon>Styles.css</DependentUpon>
-    </Content>
+    <Content Include="../build/$(AssemblyName).targets" PackagePath="build\$(AssemblyName).targets" />
   </ItemGroup>
 
+  <!-- Include package icon for NuGet -->
   <ItemGroup>
-    <None Include="../build/Limbo.png" Pack="true" PackagePath="\" />
+    <Content Include="../build/Limbo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
+
+  <!-- Generate XML documentation -->
+  <PropertyGroup>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
 
 </Project>

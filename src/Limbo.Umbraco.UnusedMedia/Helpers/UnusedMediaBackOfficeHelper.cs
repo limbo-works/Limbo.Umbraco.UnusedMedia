@@ -1,24 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using Limbo.Umbraco.UnusedMedia.Models.Api;
 using Limbo.Umbraco.UnusedMedia.Models.References;
 using Limbo.Umbraco.UnusedMedia.Services;
-using Lucene.Net.Support;
+using Microsoft.AspNetCore.Http;
 using Skybrud.Essentials.Reflection;
 using Skybrud.Essentials.Strings;
 using Skybrud.Forms.Models.Fields;
-using Umbraco.Core;
-using Umbraco.Core.Dashboards;
-using Umbraco.Core.Models;
-using Umbraco.Core.Models.Membership;
-using Umbraco.Core.Models.PublishedContent;
-using Umbraco.Core.Services;
-using Umbraco.Web;
+using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Dashboards;
+using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Models.Membership;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Web;
+using Umbraco.Extensions;
 
 namespace Limbo.Umbraco.UnusedMedia.Helpers {
-    
+
     public class UnusedMediaBackOfficeHelper {
 
         private readonly IUserService _userService;
@@ -35,7 +35,7 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         #region Constructors
 
         public UnusedMediaBackOfficeHelper(IUserService userService, ILocalizedTextService localizedTextService, IUmbracoContextAccessor umbracoContextAccessor, UnusedMediaService unusedMediaService) {
-            
+
             _userService = userService;
             _localizedTextService = localizedTextService;
             _umbracoContextAccessor = umbracoContextAccessor;
@@ -57,7 +57,7 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         public string GetCacheBuster() {
             return ReflectionUtils.GetInformationalVersion(GetType().Assembly);
         }
-        
+
         /// <summary>
         /// Returns the access rules for <see cref="UnusedMediaBackOfficeHelper"/>.
         /// </summary>
@@ -72,7 +72,7 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         /// <param name="context">The current HTTP context.</param>
         /// <param name="currentUser">The current user.</param>
         /// <returns>A collection of <see cref="FieldBase"/> representing the filters.</returns>
-        public virtual IEnumerable<FieldBase> GetFilters(HttpContextBase context, IUser currentUser) {
+        public virtual IEnumerable<FieldBase> GetFilters(HttpContext context, IUser currentUser) {
 
             List<FieldBase> filters = new List<FieldBase>();
 
@@ -90,18 +90,20 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         /// <param name="context">The current HTTP context.</param>
         /// <param name="currentUser">The current user.</param>
         /// <returns>An instance of <see cref="UnusedMediaOptions"/>.</returns>
-        public virtual UnusedMediaOptions GetOptions(HttpContextBase context, IUser currentUser) {
+        public virtual UnusedMediaOptions GetOptions(HttpContext context, IUser currentUser) {
 
-            int limit = StringUtils.ParseInt32(context.Request.QueryString["limit"]);
-            if (limit <= 0) limit = DefaultListLimit;
+            int limit = StringUtils.ParseInt32(context.Request.Query["limit"]);
+            if (limit <= 0) {
+                limit = DefaultListLimit;
+            }
 
-            int page = Math.Max(StringUtils.ParseInt32(context.Request.QueryString["page"]), 1);
-            
+            int page = Math.Max(StringUtils.ParseInt32(context.Request.Query["page"]), 1);
+
             return new UnusedMediaOptions {
-                Text = context.Request.QueryString["text"],
-                Path = StringUtils.ParseInt32Array(context.Request.QueryString["path"]),
-                CreatorIds = StringUtils.ParseInt32Array(context.Request.QueryString["creatorIds"]),
-                WriterIds = StringUtils.ParseInt32Array(context.Request.QueryString["writerIds"]),
+                Text = context.Request.Query["text"],
+                Path = StringUtils.ParseInt32Array(context.Request.Query["path"]),
+                CreatorIds = StringUtils.ParseInt32Array(context.Request.Query["creatorIds"]),
+                WriterIds = StringUtils.ParseInt32Array(context.Request.Query["writerIds"]),
                 Limit = limit,
                 Page = page
             };
@@ -111,37 +113,43 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         #endregion
 
         #region Protected member methods
-        
+
         /// <summary>
         /// Appends the text filter to <paramref name="filters"/>. The method can be overriden to change the default behaviour.
         /// </summary>
         /// <param name="context">The current HTTP context.</param>
         /// <param name="currentUser">The current user.</param>
         /// <param name="filters">The list of filters.</param>
-        protected virtual void AppendTextFilter(HttpContextBase context, IUser currentUser, List<FieldBase> filters) {
+        protected virtual void AppendTextFilter(HttpContext context, IUser currentUser, List<FieldBase> filters) {
             filters.Add(new TextField("text") {
-                Placeholder = _localizedTextService.Localize("typeToSearch")
+                Placeholder = _localizedTextService.Localize(null, "typeToSearch")
             });
         }
-        
+
         /// <summary>
         /// Appends the folders filter to <paramref name="filters"/>. The method can be overriden to change the default behaviour.
         /// </summary>
         /// <param name="context">The current HTTP context.</param>
         /// <param name="currentUser">The current user.</param>
         /// <param name="filters">The list of filters.</param>
-        protected virtual void AppendFoldersFilters(HttpContextBase context, IUser currentUser, List<FieldBase> filters) {
-            
+        protected virtual void AppendFoldersFilters(HttpContext context, IUser currentUser, List<FieldBase> filters) {
+
             // Initialize the list with an item for an empty selection
             List<ListItem> items = new List<ListItem> {
-                new ListItem("", _localizedTextService.Localize("unusedMedia/selectFolder"))
+                new ListItem("", _localizedTextService.Localize("unusedMedia", "selectFolder"))
             };
 
+            if (!_umbracoContextAccessor.TryGetUmbracoContext(out var umbracoContext)) {
+                return;
+            }
+
             // Iterate through all media at the root level
-            foreach (IPublishedContent level1 in _umbracoContextAccessor.UmbracoContext.Media.GetAtRoot()) {
+            foreach (IPublishedContent level1 in umbracoContext.Media.GetAtRoot()) {
 
                 // Ignore if not a folder
-                if (level1.ContentType.Alias != Constants.Conventions.MediaTypes.Folder) continue;
+                if (level1.ContentType.Alias != Constants.Conventions.MediaTypes.Folder) {
+                    continue;
+                }
 
                 // Append an item for the folder
                 items.Add(new ListItem(level1.Id, level1.Name));
@@ -169,18 +177,24 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         /// <param name="levels">The maximum level or depth to append folders for.</param>
         protected virtual void AppendChildren(List<ListItem> items, IPublishedContent parent, int levels) {
 
-            if (parent.Level == levels) return;
+            if (parent.Level == levels) {
+                return;
+            }
 
             foreach (IPublishedContent child in parent.Children) {
 
                 // Skip if not a folder
-                if (child.ContentType.Alias != Constants.Conventions.MediaTypes.Folder) continue;
+                if (child.ContentType.Alias != Constants.Conventions.MediaTypes.Folder) {
+                    continue;
+                }
 
                 string name = child.Name;
 
                 // Prepend dashes to the name to visualize the tree structure
-                for (int i = 2; i <= child.Level; i++) name = "-- " + name;
-                
+                for (int i = 2; i <= child.Level; i++) {
+                    name = "-- " + name;
+                }
+
                 items.Add(new ListItem(child.Id, name));
 
                 // Run through the child's children
@@ -196,23 +210,26 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         /// <param name="context">The current HTTP context.</param>
         /// <param name="currentUser">The current user.</param>
         /// <param name="filters">The list of filters.</param>
-        protected virtual void AppendCreatorsAndWritersFilters(HttpContextBase context, IUser currentUser, List<FieldBase> filters) {
+        protected virtual void AppendCreatorsAndWritersFilters(HttpContext context, IUser currentUser, List<FieldBase> filters) {
 
             List<ListItem> creators = new List<ListItem>();
             List<ListItem> writers = new List<ListItem>();
-            
-            creators.Add(new ListItem("", _localizedTextService.Localize("unusedMedia/createdBy")));
-            creators.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMedia/me")));
-            
-            writers.Add(new ListItem("", _localizedTextService.Localize("unusedMedia/updatedBy")));
-            writers.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMedia/me")));
+
+            creators.Add(new ListItem("", _localizedTextService.Localize("unusedMedia", "createdBy")));
+            creators.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMedia", "me")));
+
+            writers.Add(new ListItem("", _localizedTextService.Localize("unusedMedia", "updatedBy")));
+            writers.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMedia", "me")));
 
             foreach (IUser user in GetUsers(context, currentUser)) {
-                if (currentUser.Id == user.Id) continue;
+                if (currentUser.Id == user.Id) {
+                    continue;
+                }
+
                 creators.Add(new ListItem(user.Id, user.Name));
                 writers.Add(new ListItem(user.Id, user.Name));
             }
-            
+
             filters.Add(new DropDownList("creatorIds") {
                 Items = creators
             });
@@ -232,7 +249,7 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         /// <param name="context">The current HTTP context.</param>
         /// <param name="currentUser">The current user.</param>
         /// <returns>An instance of <see cref="IEnumerable{IUser}"/> containing the users to be shown.</returns>
-        protected virtual IEnumerable<IUser> GetUsers(HttpContextBase context, IUser currentUser) {
+        protected virtual IEnumerable<IUser> GetUsers(HttpContext context, IUser currentUser) {
             return _userService
                 .GetAll(0, int.MaxValue, out _)
                 .Where(x => x.UserState == UserState.Active)
@@ -248,7 +265,7 @@ namespace Limbo.Umbraco.UnusedMedia.Helpers {
         public virtual DeleteMediaResponse GetReferencesByChild(IMedia child, IUser user) {
 
             ReferenceResult result = _unusedMediaService.GetReferencesByChild(child, user);
-            
+
             return new DeleteMediaResponse(result);
 
         }
