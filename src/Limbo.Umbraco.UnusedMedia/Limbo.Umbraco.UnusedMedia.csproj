@@ -18,6 +18,7 @@
 
   <!-- Information for the NuGet package -->
   <PropertyGroup>
+    <Title>Limbo Unused Media</Title>
     <PackageId>Limbo.Umbraco.UnusedMedia</PackageId>
     <PackageTags>Umbraco, Unused media, Media, Limbo, Skybrud</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -47,6 +48,12 @@
 
   <!-- Include the targets file -->
   <ItemGroup>
+    <Content Update="App_Plugins\Limbo.Umbraco.UnusedMedia\Styles\Styles.css">
+      <DependentUpon>Styles.less</DependentUpon>
+    </Content>
+    <Content Update="App_Plugins\Limbo.Umbraco.UnusedMedia\Styles\Styles.min.css">
+      <DependentUpon>Styles.css</DependentUpon>
+    </Content>
     <Content Include="../build/$(AssemblyName).targets" PackagePath="build\$(AssemblyName).targets" />
   </ItemGroup>
 
