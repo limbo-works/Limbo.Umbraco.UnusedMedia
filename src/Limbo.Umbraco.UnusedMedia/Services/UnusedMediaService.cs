@@ -38,7 +38,7 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
         private readonly DataValueReferenceFactoryCollection _dataValueReferenceFactories;
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IPublishedMemberCache _publishedMemberCache;
-        private readonly IOHelper _iOHelper;
+        private readonly IIOHelper _iOHelper;
 
         #region Constructors
 
@@ -46,14 +46,14 @@ namespace Limbo.Umbraco.UnusedMedia.Services {
             Lazy<PropertyEditorCollection> propertyEditors,
             DataValueReferenceFactoryCollection dataValueReferenceFactories,
             IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedMemberCache publishedMemberCache,
-            IOHelper iOHelper) {
+            IPublishedSnapshotAccessor publishedSnapshotAccessor,
+            IIOHelper iOHelper) {
 
             _relationService = relationService;
             _propertyEditors = propertyEditors;
             _dataValueReferenceFactories = dataValueReferenceFactories;
             _umbracoContextAccessor = umbracoContextAccessor;
-            _publishedMemberCache = publishedMemberCache;
+            _publishedMemberCache = publishedSnapshotAccessor.GetRequiredPublishedSnapshot().Members;
             _iOHelper = iOHelper;
         }
 
