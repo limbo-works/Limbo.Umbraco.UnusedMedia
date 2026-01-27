@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Infrastructure.Scoping;
@@ -21,10 +18,10 @@ public class RedirectsProvider {
     }
 
     /// <summary>
-    /// Scans the redirects table for media UDIs used within destination URLs.
+    /// Scans the redirects table for media UDIs used within destination URLs and destination keys.
     /// This method is intended to be called once to populate the internal cache.
     /// </summary>
-    /// <returns>A HashSet of media UDIs found in redirect URLs.</returns>
+    /// <returns>A HashSet of media UDIs found in redirect URLs and keys.</returns>
     private HashSet<string> ScanForUsedMediaUdis() {
         _logger.LogInformation("RedirectsProvider: Starting scan for used media UDIs in redirects");
         var usedMediaUdis = new HashSet<string>();
@@ -35,21 +32,31 @@ public class RedirectsProvider {
             return usedMediaUdis;
         }
 
+        // Fetch both DestinationUrl and DestinationKey
         var sql = scope.SqlContext.Sql()
-            .Select("DestinationUrl")
+            .Select("DestinationUrl", "DestinationKey")
             .From("SkybrudRedirects");
 
-        var redirectUrls = scope.Database.Fetch<string>(sql);
-        _logger.LogInformation("RedirectsProvider: Found {Count} redirects to scan", redirectUrls.Count);
+        var redirects = scope.Database.Fetch<RedirectData>(sql);
+        _logger.LogInformation("RedirectsProvider: Found {Count} redirects to scan", redirects.Count);
 
-        foreach (var url in redirectUrls) {
-            if (string.IsNullOrWhiteSpace(url)) {
-                continue;
+        foreach (var redirect in redirects) {
+            // Check DestinationUrl for media UDIs
+            if (!string.IsNullOrWhiteSpace(redirect.DestinationUrl)) {
+                var matches = _mediaUdiRegex.Matches(redirect.DestinationUrl);
+                foreach (Match match in matches) {
+                    usedMediaUdis.Add(match.Groups[1].Value);
+                }
             }
 
-            var matches = _mediaUdiRegex.Matches(url);
-            foreach (Match match in matches) {
-                usedMediaUdis.Add(match.Groups[1].Value);
+            // Check DestinationKey for media GUIDs and convert to UDI
+            if (redirect.DestinationKey.HasValue && redirect.DestinationKey.Value != Guid.Empty) {
+                // Convert GUID to UDI format: umb://media/{guid without hyphens}
+                string guidWithoutHyphens = redirect.DestinationKey.Value.ToString("N");
+                string mediaUdi = $"umb://media/{guidWithoutHyphens}";
+                usedMediaUdis.Add(mediaUdi);
+                _logger.LogDebug("RedirectsProvider: Found media key {Key}, converted to UDI {Udi}",
+                    redirect.DestinationKey.Value, mediaUdi);
             }
         }
 
@@ -58,12 +65,18 @@ public class RedirectsProvider {
     }
 
     /// <summary>
-    /// Checks if the given media UDI is used in any redirect destination URLs.
+    /// Checks if the given media UDI is used in any redirect destination URLs or keys.
     /// </summary>
     /// <param name="mediaUdi">The UDI of the media item to check (e.g., "umb://media/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx").</param>
     /// <returns><c>true</c> if the media is used; otherwise, <c>false</c>.</returns>
     public bool IsMediaUsed(string mediaUdi) {
         return _usedMediaUdis.Value.Contains(mediaUdi);
+    }
+
+    // Helper class to map database results
+    private class RedirectData {
+        public string? DestinationUrl { get; set; }
+        public Guid? DestinationKey { get; set; }
     }
 
 }
