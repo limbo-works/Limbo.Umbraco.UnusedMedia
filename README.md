@@ -1,55 +1,108 @@
 # Limbo.Umbraco.UnusedMedia
 
-Unused media dashboard for Umbraco 8.
+A powerful Umbraco package designed to help content editors and administrators identify and manage unused media items within their Umbraco installation. This tool provides a dedicated dashboard in the Umbraco backoffice to scan for media that is not referenced in content properties or redirects, helping to keep your media library clean and optimize site performance.
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage (Backoffice Dashboard)](#usage-backoffice-dashboard)
+- [Technical Details](#technical-details)
+- [Extensibility](#extensibility)
+
+## Features
+
+- **Scan for Unused Media:** Initiates a comprehensive scan of your Umbraco content and redirects to identify media files that are not actively in use.
+- **Progress Reporting:** Provides real-time updates on the scanning process directly within the dashboard.
+- **Detailed Report:** Displays a list of potentially unused media items, including their name, last update date, and size.
+- **Direct Deletion:** Allows for direct deletion of identified unused media items from the dashboard.
+- **Clear Scan Data:** Option to clear the stored scan results.
+- **Extensible Providers:** Designed with extensibility in mind, allowing developers to add custom logic for determining if a media item is "used."
 
 ## Installation
 
-Via <a href="https://www.nuget.org/packages/Limbo.Umbraco.UnusedMedia/1.0.0-beta004" target="_blank">NuGet</a>:
+The package can be installed via NuGet Package Manager.
 
+```bash
+# .NET CLI
+dotnet add package Limbo.Umbraco.UnusedMedia
+
+# NuGet Package Manager
+Install-Package Limbo.Umbraco.UnusedMedia
 ```
-dotnet add package Limbo.Umbraco.UnusedMedia --version 1.0.0-beta004
-```
-
-or:
-
-```
-Install-Package Limbo.Umbraco.UnusedMedia -Version 1.0.0-beta004
-```
-
-## Usage
-
-Go to the **Content** section in Umbraco and select the **Unused media** tab 😎
 
 ## Configuration
 
-The package has no real configuration, but various parts can be overriden in the code using dependency injection. 
+Currently, this package is designed to work out-of-the-box with minimal configuration. All settings are managed internally or via dependency injection. Future versions might introduce `appsettings.json` options for fine-tuning scan behavior.
 
-### User List
+## Usage (Backoffice Dashboard)
 
-The dashboard will feature two list of users - one for filtering by creator and another for filtering by writer (last updated by). Both lists are populated by the `UnusedMediaBackOfficeHelper.GetUsers` method.
+Once installed, a new dashboard will be available in the Umbraco backoffice:
 
-The default implementation, as shown below, gets all users, filters out users that are not approved, and them orderds them all by name.
+1.  Navigate to the **Settings** section in the Umbraco backoffice.
+2.  Locate and click on the **Unused Media** dashboard.
 
-```csharp
-protected virtual IEnumerable<IUser> GetUsers(HttpContextBase context, IUser currentUser) {
-    return _userService
-        .GetAll(0, int.MaxValue, out _)
-        .Where(x => x.UserState == UserState.Active)
-        .OrderBy(x => x.Name);
-}
-```
+### Dashboard Elements
 
-Say we wish to filter out all Limbo employees for non-admin users, we could inject our own helper class via DI, and then override the method with the following implementation:
+-   **Scan Date:** Displays the date and time of the latest completed scan.
+-   **Media Count:** Shows the number of media items found in the last scan.
+-   **Media Folders Scanned:** (Currently not actively calculated, will be enhanced in future versions if needed for detailed reporting).
+-   **Scan Media Button:**
+    -   Click this button to start a new scan for unused media.
+    -   The button will show "Scanning media..." during the process and become disabled.
+-   **Clear Scan Button:** Clears the current scan results displayed in the dashboard.
+-   **Progress Section (visible during scan):**
+    -   **Progress Bar:** Visual representation of the scan's progress.
+    -   **Processed:** Shows the number of media items processed versus the total.
+    -   **Log Container:** Displays a running log of processed media items and any errors encountered during the scan.
+-   **Unused Media Table:**
+    -   Lists all media items identified as unused.
+    -   **Name:** The name of the media item, with a link to open it in the media section.
+    -   **Last Updated:** The date and time the media item was last updated.
+    -   **Size:** The file size of the media item.
+    -   **Delete Button:** Allows you to delete the specific media item directly from the report. A confirmation overlay will appear before deletion.
 
-```csharp
-protected override IEnumerable<IUser> GetUsers(HttpContextBase context, IUser currentUser) {
+## Technical Details
 
-    bool isAdmin = currentUser.Groups.Any(x => x.Alias == "admin");
+The **Limbo.Umbraco.UnusedMedia** package leverages Umbraco's core services and modern .NET features to provide its functionality.
 
-    return _userService
-        .GetAll(0, int.MaxValue, out _)
-        .Where(x => x.UserState == UserState.Active && (isAdmin || !x.Email.EndsWith("@limbo.works")))
-        .OrderBy(x => x.Name);
+### Key Components:
 
-}
-```
+-   **`UnusedMediaBackOfficeController.cs`**:
+    -   An `UmbracoAuthorizedApiController` that exposes REST endpoints for the backoffice dashboard.
+    -   Handles requests for starting/stopping scans, retrieving scan status, fetching unused media reports, and deleting media.
+-   **`UnusedMediaService.cs`**:
+    -   The core service responsible for orchestrating the unused media scan.
+    -   Registered as a `Singleton` in the Dependency Injection container.
+    -   Uses `IBackgroundTaskQueue` and `IServiceScopeFactory` to safely consume scoped services (like `IPublishedContentQuery`) within its singleton lifetime.
+    -   Manages the `UnusedMediaScanStatus` for progress reporting.
+-   **`DeepScanProvider.cs`**:
+    -   A provider that scans all content properties in Umbraco for references to media UDIs.
+    -   It uses `IPublishedContentQuery` to traverse the content tree. To prevent DI lifetime mismatches, `IPublishedContentQuery` is resolved from a new service scope created via `IServiceScopeFactory`.
+    -   Employs a `Lazy<HashSet<string>>` to cache the list of used media UDIs after the initial scan.
+-   **`RedirectsProvider.cs`**:
+    -   A provider that scans redirects (specifically from the "Skybrud.Umbraco.Redirects" package's `SkybrudRedirects` table) for media UDIs referenced in destination URLs.
+    -   Uses `IScopeProvider` for database access.
+    -   Also uses a `Lazy<HashSet<string>>` for caching used media UDIs.
+-   **`SqlHelper.cs`**:
+    -   Provides direct SQL access for querying `umbracoNode` and `umbracoRelation` tables to efficiently retrieve all media GUIDs and check media usage in relations.
+    -   Utilizes `IScopeProvider` for safe database operations.
+-   **`UnusedMediaScanStatus.cs`**: A model to track the progress and status of a background scan task, including processed items and errors.
+-   **`UnusedMediaReport.cs`**: A model representing the result of an unused media scan, containing a list of `UnusedMediaItem`s and metadata about the scan.
+-   **`UnusedMediaItem.cs`**: A model representing a single unused media item, including its ID, name, update date, and size.
+-   **`IBackgroundTaskQueue.cs`**, **`BackgroundTaskQueue.cs`**, **`QueuedHostedService.cs`**: Implement a generic background task queuing mechanism, allowing `UnusedMediaService` to offload long-running scan operations to a background thread without blocking the UI.
+-   **`MediaCleanupBackgroundService.cs`**: A recurring hosted service that periodically triggers a scan for unused media by calling `UnusedMediaService.StartScan()`.
+
+### Dependency Injection (DI)
+
+The package is fully integrated with Umbraco's DI container. Services are registered in `UnusedMediaComposer.cs`. Special care is taken to handle lifetime mismatches (e.g., singleton services consuming scoped dependencies) by using `IServiceScopeFactory` to create temporary scopes when needed.
+
+## Extensibility
+
+The architecture allows for easy extension:
+
+-   **Adding New Usage Providers:** You can create new classes (e.g., `MyCustomUsageProvider.cs`) that implement logic to determine if a media item is used (e.g., checking custom properties, external systems). Register your new provider as a `Transient` service in `UnusedMediaComposer.cs` and inject it into `UnusedMediaService.cs` to incorporate its logic into the overall scan.
+-   **Customizing Scan Behavior:** The `UnusedMediaService` can be extended or replaced via DI to alter how the scan is performed or how results are processed.
+
+This README aims to provide a thorough understanding of the Limbo.Umbraco.UnusedMedia package.
