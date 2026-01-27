@@ -49,7 +49,7 @@ Currently, this package is designed to work out-of-the-box with minimal configur
 
 Once installed, a new dashboard will be available in the Umbraco backoffice:
 
-1. Navigate to the **Settings** section in the Umbraco backoffice.
+1. Navigate to the **Content** section in the Umbraco backoffice.
 2. Locate and click on the **Unused Media** dashboard.
 
 ### Dashboard Elements
