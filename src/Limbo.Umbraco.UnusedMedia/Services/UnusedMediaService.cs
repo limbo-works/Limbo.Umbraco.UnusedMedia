@@ -120,6 +120,7 @@ public class UnusedMediaService {
                 int filteredByRelations = 0;
                 int filteredByDeepScan = 0;
                 int filteredByRedirects = 0;
+                int filteredFolders = 0;
 
                 foreach (var mediaGuid in allMediaGuids) {
                     processedCount++;
@@ -134,6 +135,13 @@ public class UnusedMediaService {
                     if (mediaItem == null) {
                         status.Errors.Add($"Media item with GUID {mediaGuid} not found.");
                         _logger.LogWarning("Media item with GUID {MediaGuid} not found.", mediaGuid);
+                        continue;
+                    }
+
+                    // Skip folders - we only want to check actual files
+                    if (mediaItem.ContentType.Alias == "Folder") {
+                        _logger.LogDebug("Media {MediaGuid} is a folder, skipping.", mediaGuid);
+                        filteredFolders++;
                         continue;
                     }
 
@@ -167,10 +175,10 @@ public class UnusedMediaService {
                 }
 
                 _logger.LogInformation(
-                    "Scan completed: {TotalCount} total media, {FilteredByRelations} filtered by relations, " +
+                    "Scan completed: {TotalCount} total media, {FilteredFolders} folders skipped, {FilteredByRelations} filtered by relations, " +
                     "{FilteredByDeepScan} filtered by content scan, {FilteredByRedirects} filtered by redirects, " +
                     "{UnusedCount} unused media found",
-                    status.Total, filteredByRelations, filteredByDeepScan, filteredByRedirects, unusedMediaItems.Count);
+                    status.Total, filteredFolders, filteredByRelations, filteredByDeepScan, filteredByRedirects, unusedMediaItems.Count);
 
                 _lastUnusedMediaReport = new UnusedMediaReport(unusedMediaItems, DateTime.Now, mediaFolderCount);
                 _lastScanDate = DateTime.Now;
