@@ -21,7 +21,6 @@ public class RedirectsProvider {
     /// Scans the redirects table for media UDIs used within destination URLs and destination keys.
     /// This method is intended to be called once to populate the internal cache.
     /// </summary>
-    /// <returns>A HashSet of media UDIs found in redirect URLs and keys.</returns>
     private HashSet<string> ScanForUsedMediaUdis() {
         _logger.LogInformation("RedirectsProvider: Starting scan for used media UDIs in redirects");
         var usedMediaUdis = new HashSet<string>();
@@ -67,10 +66,15 @@ public class RedirectsProvider {
     /// <summary>
     /// Checks if the given media UDI is used in any redirect destination URLs or keys.
     /// </summary>
-    /// <param name="mediaUdi">The UDI of the media item to check (e.g., "umb://media/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx").</param>
-    /// <returns><c>true</c> if the media is used; otherwise, <c>false</c>.</returns>
     public bool IsMediaUsed(string mediaUdi) {
         return _usedMediaUdis.Value.Contains(mediaUdi);
+    }
+
+    /// <summary>
+    /// Returns all identified used media UDIs.
+    /// </summary>
+    public HashSet<string> GetUsedMediaUdis() {
+        return _usedMediaUdis.Value;
     }
 
     // Helper class to map database results

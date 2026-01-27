@@ -62,10 +62,15 @@ public class DeepScanProvider {
     /// <summary>
     /// Checks if the given media UDI is used anywhere in the site's content properties.
     /// </summary>
-    /// <param name="mediaUdi">The UDI of the media item to check (e.g., "umb://media/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx").</param>
-    /// <returns><c>true</c> if the media is used; otherwise, <c>false</c>.</returns>
     public bool IsMediaUsed(string mediaUdi) {
         return _usedMediaUdis.Value.Contains(mediaUdi);
+    }
+
+    /// <summary>
+    /// Returns all identified used media UDIs.
+    /// </summary>
+    public HashSet<string> GetUsedMediaUdis() {
+        return _usedMediaUdis.Value;
     }
 
 }

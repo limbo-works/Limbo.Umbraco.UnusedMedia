@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using Limbo.Umbraco.UnusedMedia.Helpers; // Added for SqlHelper
+using Limbo.Umbraco.UnusedMedia.Helpers;
 using Limbo.Umbraco.UnusedMedia.Models;
 using Limbo.Umbraco.UnusedMedia.Providers;
 using Limbo.Umbraco.UnusedMedia.Scheduling;
@@ -21,9 +21,9 @@ public class UnusedMediaService {
     private readonly IMediaService _mediaService;
     private readonly IContentTypeService _contentTypeService;
     private readonly IUmbracoContextFactory _umbracoContextFactory;
-    private readonly SqlHelper _sqlHelper; // Added SqlHelper
-    private readonly DeepScanProvider _deepScanProvider; // Added DeepScanProvider
-    private readonly RedirectsProvider _redirectsProvider; // Added RedirectsProvider
+    private readonly SqlHelper _sqlHelper;
+    private readonly DeepScanProvider _deepScanProvider;
+    private readonly RedirectsProvider _redirectsProvider;
 
 
     // A concurrent dictionary to store the progress of each task
@@ -46,9 +46,9 @@ public class UnusedMediaService {
         _mediaService = mediaService;
         _contentTypeService = contentTypeService;
         _umbracoContextFactory = umbracoContextFactory;
-        _sqlHelper = sqlHelper; // Initialized SqlHelper
-        _deepScanProvider = deepScanProvider; // Initialized DeepScanProvider
-        _redirectsProvider = redirectsProvider; // Initialized RedirectsProvider
+        _sqlHelper = sqlHelper;
+        _deepScanProvider = deepScanProvider;
+        _redirectsProvider = redirectsProvider;
     }
 
     public UnusedMediaReport GetUnusedMediaReport() {
@@ -100,78 +100,129 @@ public class UnusedMediaService {
                     throw new InvalidOperationException("Umbraco context is null.");
                 }
 
+                // 1. Gather all explicitly used media UDIs/GUIDs from providers upfront
+                var explicitUsedGuids = new HashSet<Guid>();
+
+                var deepScanUdis = _deepScanProvider.GetUsedMediaUdis();
+                foreach (var udiStr in deepScanUdis) {
+                    if (UdiParser.TryParse(udiStr, out Udi? udi) && udi is GuidUdi guidUdi) {
+                        explicitUsedGuids.Add(guidUdi.Guid);
+                    }
+                }
+
+                var redirectUdis = _redirectsProvider.GetUsedMediaUdis();
+                foreach (var udiStr in redirectUdis) {
+                    if (UdiParser.TryParse(udiStr, out Udi? udi) && udi is GuidUdi guidUdi) {
+                        explicitUsedGuids.Add(guidUdi.Guid);
+                    }
+                }
+
                 // Get all media GUIDs from the SQL helper
                 var allMediaGuids = _sqlHelper.GetAllMediaGuids();
                 status.Total = allMediaGuids.Count;
-                _logger.LogInformation("Starting scan of {TotalCount} media items", status.Total);
+                _logger.LogInformation("Starting scan of {TotalCount} media items. Found {ExplicitCount} explicitly used items.", status.Total, explicitUsedGuids.Count);
 
-                var unusedMediaItems = new List<UnusedMediaItem>();
+                // Candidates for deletion (we will filter these against used folders later)
+                var unusedCandidates = new List<UnusedMediaItem>();
+
+                // Paths of folders that are EXPLICITLY used. 
+                // Any media residing in these paths should be considered used.
+                var usedFolderPaths = new List<string>();
+
                 int processedCount = 0;
                 int mediaFolderCount = 0;
                 int filteredByRelations = 0;
-                int filteredByDeepScan = 0;
-                int filteredByRedirects = 0;
+                int filteredByExplicitUsage = 0;
                 int filteredFolders = 0;
 
                 foreach (var mediaGuid in allMediaGuids) {
                     processedCount++;
                     status.Progress = processedCount;
 
-                    if (processedCount % 10 == 0 || processedCount == status.Total) {
-                        status.ProcessedMedia.Add($"Processing media: {mediaGuid}");
+                    if (processedCount % 50 == 0 || processedCount == status.Total) {
+                        status.ProcessedMedia.Add($"Processing item {processedCount}/{status.Total}");
                     }
-                    _logger.LogDebug("Processing media with GUID: {MediaGuid}", mediaGuid);
 
                     IMedia? mediaItem = _mediaService.GetById(mediaGuid);
                     if (mediaItem == null) {
                         status.Errors.Add($"Media item with GUID {mediaGuid} not found.");
-                        _logger.LogWarning("Media item with GUID {MediaGuid} not found.", mediaGuid);
                         continue;
                     }
 
-                    // Skip folders - we only want to check actual files
-                    if (mediaItem.ContentType.Alias == "Folder") {
-                        _logger.LogDebug("Media {MediaGuid} is a folder, skipping.", mediaGuid);
+                    if (mediaItem.Trashed) {
+                        // Skip items in recycle bin
+                        continue;
+                    }
+
+                    bool isFolder = mediaItem.ContentType.Alias == "Folder";
+                    if (isFolder) mediaFolderCount++;
+
+                    string mediaUdi = mediaItem.GetUdi().ToString();
+
+                    // Check 1: Explicitly used by Content or Redirects?
+                    if (explicitUsedGuids.Contains(mediaGuid)) {
+                        filteredByExplicitUsage++;
+
+                        // IMPORTANT: If this used item is a Folder, store its path.
+                        // We will use this to protect its children later.
+                        if (isFolder && !string.IsNullOrEmpty(mediaItem.Path)) {
+                            usedFolderPaths.Add(mediaItem.Path + ","); // Append comma to ensure exact path matching (avoid matching -1,10 vs -1,100)
+                        }
+                        continue;
+                    }
+
+                    // Check 2: Relations (e.g. tracking references)
+                    if (_sqlHelper.IsMediaUsedInRelations(mediaGuid)) {
+                        filteredByRelations++;
+                        // If a folder is used in a relation, we should arguably protect its children too
+                        if (isFolder && !string.IsNullOrEmpty(mediaItem.Path)) {
+                            usedFolderPaths.Add(mediaItem.Path + ",");
+                        }
+                        continue;
+                    }
+
+                    // If it is a folder and not used, we skip adding it to the list 
+                    // (The dashboard is mainly for deleting files, deleting empty folders is less critical/risky)
+                    if (isFolder) {
                         filteredFolders++;
                         continue;
                     }
 
-                    string mediaUdi = mediaItem.GetUdi().ToString();
+                    // If we get here, the item is not explicitly used, and not a relation.
+                    // Add to candidates. We will check parent folder usage after the loop.
+                    unusedCandidates.Add(new UnusedMediaItem(mediaItem));
+                }
 
-                    // Check if media is used by relations
-                    if (_sqlHelper.IsMediaUsedInRelations(mediaGuid)) {
-                        _logger.LogDebug("Media {MediaUdi} is used in relations.", mediaUdi);
-                        filteredByRelations++;
+                // FINAL PASS: Filter candidates based on Used Folder Paths
+                var finalUnusedItems = new List<UnusedMediaItem>();
+                int filteredByParentFolder = 0;
+
+                foreach (var candidate in unusedCandidates) {
+                    if (string.IsNullOrEmpty(candidate.Path)) {
+                        finalUnusedItems.Add(candidate);
                         continue;
                     }
 
-                    // Check if media is used by DeepScanProvider
-                    if (_deepScanProvider.IsMediaUsed(mediaUdi)) {
-                        _logger.LogDebug("Media {MediaUdi} is used by DeepScanProvider.", mediaUdi);
-                        filteredByDeepScan++;
-                        continue;
+                    // Check if the candidate's path starts with any of the used folder paths
+                    // Example: Used Folder Path: "-1,1000,"
+                    //          Candidate Path:   "-1,1000,1005,1006" -> STARTS WITH -> PROTECT IT
+                    bool isImplicitlyUsed = usedFolderPaths.Any(folderPath => candidate.Path.StartsWith(folderPath));
+
+                    if (isImplicitlyUsed) {
+                        filteredByParentFolder++;
+                    } else {
+                        finalUnusedItems.Add(candidate);
                     }
-
-                    // Check if media is used by RedirectsProvider
-                    if (_redirectsProvider.IsMediaUsed(mediaUdi)) {
-                        _logger.LogDebug("Media {MediaUdi} is used by RedirectsProvider.", mediaUdi);
-                        filteredByRedirects++;
-                        continue;
-                    }
-
-                    // Add other providers here if needed
-
-                    unusedMediaItems.Add(new UnusedMediaItem(mediaItem));
-                    _logger.LogDebug("Media {MediaUdi} is identified as unused.", mediaUdi);
                 }
 
                 _logger.LogInformation(
-                    "Scan completed: {TotalCount} total media, {FilteredFolders} folders skipped, {FilteredByRelations} filtered by relations, " +
-                    "{FilteredByDeepScan} filtered by content scan, {FilteredByRedirects} filtered by redirects, " +
-                    "{UnusedCount} unused media found",
-                    status.Total, filteredFolders, filteredByRelations, filteredByDeepScan, filteredByRedirects, unusedMediaItems.Count);
+                    "Scan completed: {TotalCount} total media. " +
+                    "{FilteredByExplicit} explicit usage, {FilteredByRelations} relations. " +
+                    "{FilteredByParentFolder} implicitly used (in used folders). " +
+                    "{UnusedCount} final unused items found.",
+                    status.Total, filteredByExplicitUsage, filteredByRelations, filteredByParentFolder, finalUnusedItems.Count);
 
-                _lastUnusedMediaReport = new UnusedMediaReport(unusedMediaItems, DateTime.Now, mediaFolderCount);
+                _lastUnusedMediaReport = new UnusedMediaReport(finalUnusedItems, DateTime.Now, mediaFolderCount);
                 _lastScanDate = DateTime.Now;
 
                 status.Status = "Completed";
@@ -195,7 +246,7 @@ public class UnusedMediaService {
             // Refresh the report after deletion
             if (_lastUnusedMediaReport != null) {
                 _lastUnusedMediaReport.MediaItems.RemoveAll(x => x.Id == mediaId);
-                _lastUnusedMediaReport.ScanDate = DateTime.Now; // Update scan date as content has changed
+                _lastUnusedMediaReport.ScanDate = DateTime.Now;
             }
         } else {
             _logger.LogWarning("Attempted to delete non-existent media with ID: {MediaId}", mediaId);
