@@ -5,8 +5,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Skybrud.Essentials.Json.Extensions;
 using Umbraco.Cms.Web.BackOffice.Controllers;
-using System;
-using System.Collections.Generic;
 
 namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice;
 

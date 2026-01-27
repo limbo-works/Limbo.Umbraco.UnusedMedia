@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
-using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
 
 namespace Limbo.Umbraco.UnusedMedia.Providers;
@@ -33,7 +29,7 @@ public class DeepScanProvider {
         var usedMediaUdis = new HashSet<string>();
         int contentCount = 0;
         int propertyCount = 0;
-        
+
         using (var scope = _serviceScopeFactory.CreateScope()) {
             var publishedContentQuery = scope.ServiceProvider.GetRequiredService<IPublishedContentQuery>();
             var rootContent = publishedContentQuery.ContentAtRoot();
@@ -57,9 +53,9 @@ public class DeepScanProvider {
             }
         }
 
-        _logger.LogInformation("DeepScanProvider: Scanned {ContentCount} content items with {PropertyCount} properties, found {MediaCount} unique media UDIs", 
+        _logger.LogInformation("DeepScanProvider: Scanned {ContentCount} content items with {PropertyCount} properties, found {MediaCount} unique media UDIs",
             contentCount, propertyCount, usedMediaUdis.Count);
-        
+
         return usedMediaUdis;
     }
 

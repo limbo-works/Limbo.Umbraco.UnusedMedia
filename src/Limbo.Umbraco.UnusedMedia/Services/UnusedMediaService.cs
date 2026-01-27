@@ -1,24 +1,15 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using Limbo.Umbraco.UnusedMedia.Helpers; // Added for SqlHelper
 using Limbo.Umbraco.UnusedMedia.Models;
 using Limbo.Umbraco.UnusedMedia.Providers;
 using Limbo.Umbraco.UnusedMedia.Scheduling;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
-using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
-using Constants = Umbraco.Cms.Core.Constants;
-using Limbo.Umbraco.UnusedMedia.Helpers; // Added for SqlHelper
 
 namespace Limbo.Umbraco.UnusedMedia.Services;
 
@@ -125,9 +116,9 @@ public class UnusedMediaService {
                 foreach (var mediaGuid in allMediaGuids) {
                     processedCount++;
                     status.Progress = processedCount;
-                    
+
                     if (processedCount % 10 == 0 || processedCount == status.Total) {
-                         status.ProcessedMedia.Add($"Processing media: {mediaGuid}");
+                        status.ProcessedMedia.Add($"Processing media: {mediaGuid}");
                     }
                     _logger.LogDebug("Processing media with GUID: {MediaGuid}", mediaGuid);
 
@@ -167,9 +158,9 @@ public class UnusedMediaService {
                         filteredByRedirects++;
                         continue;
                     }
-                    
+
                     // Add other providers here if needed
-                    
+
                     unusedMediaItems.Add(new UnusedMediaItem(mediaItem));
                     _logger.LogDebug("Media {MediaUdi} is identified as unused.", mediaUdi);
                 }

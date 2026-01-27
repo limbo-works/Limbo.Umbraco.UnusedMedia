@@ -2,6 +2,7 @@
 using Umbraco.Cms.Core.Semver;
 
 namespace Limbo.Umbraco.UnusedMedia;
+
 public class UnusedMediaPackage {
 
     public const string Alias = "Limbo.Umbraco.UnusedMedia";

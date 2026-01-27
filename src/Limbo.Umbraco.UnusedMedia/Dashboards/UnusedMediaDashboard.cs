@@ -4,7 +4,7 @@ namespace Limbo.Umbraco.UnusedMedia.Dashboards;
 
 public class UnusedMediaDashboard : IDashboard {
 
-    public string Alias => "Limbo.Umbraco.UnusedMedia.Dashboard";
+    public string Alias => "LimboUnusedMedia";
 
     public string[] Sections => new[] { "content" };
 
