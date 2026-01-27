@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Infrastructure.Scoping;
 
 namespace Limbo.Umbraco.UnusedMedia.Providers;
@@ -9,12 +10,14 @@ namespace Limbo.Umbraco.UnusedMedia.Providers;
 public class RedirectsProvider {
 
     private readonly IScopeProvider _scopeProvider;
-    private readonly Lazy<HashSet<string>> _usedMediaUdis; // Use Lazy for deferred execution
+    private readonly ILogger<RedirectsProvider> _logger;
+    private readonly Lazy<HashSet<string>> _usedMediaUdis;
     private static readonly Regex _mediaUdiRegex = new Regex(@"(umb:\/\/media\/([0-9a-fA-F]{32}))", RegexOptions.Compiled);
 
-    public RedirectsProvider(IScopeProvider scopeProvider) {
+    public RedirectsProvider(IScopeProvider scopeProvider, ILogger<RedirectsProvider> logger) {
         _scopeProvider = scopeProvider;
-        _usedMediaUdis = new Lazy<HashSet<string>>(ScanForUsedMediaUdis); // Initialize Lazy
+        _logger = logger;
+        _usedMediaUdis = new Lazy<HashSet<string>>(ScanForUsedMediaUdis);
     }
 
     /// <summary>
@@ -23,10 +26,12 @@ public class RedirectsProvider {
     /// </summary>
     /// <returns>A HashSet of media UDIs found in redirect URLs.</returns>
     private HashSet<string> ScanForUsedMediaUdis() {
+        _logger.LogInformation("RedirectsProvider: Starting scan for used media UDIs in redirects");
         var usedMediaUdis = new HashSet<string>();
 
         using var scope = _scopeProvider.CreateScope(autoComplete: true);
         if (scope.Database.SqlContext.SqlSyntax.DoesTableExist(scope.Database, "SkybrudRedirects") == false) {
+            _logger.LogInformation("RedirectsProvider: SkybrudRedirects table does not exist, skipping redirect scan");
             return usedMediaUdis;
         }
 
@@ -35,6 +40,7 @@ public class RedirectsProvider {
             .From("SkybrudRedirects");
 
         var redirectUrls = scope.Database.Fetch<string>(sql);
+        _logger.LogInformation("RedirectsProvider: Found {Count} redirects to scan", redirectUrls.Count);
 
         foreach (var url in redirectUrls) {
             if (string.IsNullOrWhiteSpace(url)) {
@@ -43,10 +49,11 @@ public class RedirectsProvider {
 
             var matches = _mediaUdiRegex.Matches(url);
             foreach (Match match in matches) {
-                usedMediaUdis.Add(match.Groups[1].Value); // Add the full UDI
+                usedMediaUdis.Add(match.Groups[1].Value);
             }
         }
 
+        _logger.LogInformation("RedirectsProvider: Found {MediaCount} unique media UDIs in redirects", usedMediaUdis.Count);
         return usedMediaUdis;
     }
 
@@ -56,7 +63,7 @@ public class RedirectsProvider {
     /// <param name="mediaUdi">The UDI of the media item to check (e.g., "umb://media/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx").</param>
     /// <returns><c>true</c> if the media is used; otherwise, <c>false</c>.</returns>
     public bool IsMediaUsed(string mediaUdi) {
-        return _usedMediaUdis.Value.Contains(mediaUdi); // Access .Value to trigger lazy evaluation
+        return _usedMediaUdis.Value.Contains(mediaUdi);
     }
 
 }

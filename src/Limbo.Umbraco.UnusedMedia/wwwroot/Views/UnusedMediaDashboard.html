@@ -9,24 +9,34 @@
     <div class="umb-pane">
 
         <div style="margin-bottom: 15px;">
-            <label><localize key="unusedMediaDashboard_scanDate">Latest scan</localize>:</label>
-            <span>{{vm.scanDate || "N/A"}}</span>
+            <label>
+                <localize key="unusedMediaDashboard_scanDate">Latest scan</localize>:
+            </label>
+            <span ng-bind="vm.scanDate"></span>
         </div>
 
         <div style="margin-bottom: 15px;">
-            <label><localize key="unusedMediaDashboard_mediaCount">Media count</localize>:</label>
-            <span>{{vm.media.length}}</span>
+            <label>
+                <localize key="unusedMediaDashboard_mediaCount">Media count</localize>:
+            </label>
+            <span ng-bind="vm.media.length || 0"></span>
         </div>
 
         <div style="margin-bottom: 15px;">
-            <label><localize key="unusedMediaDashboard_mediaFolder">Media folders scanned</localize>:</label>
-            <span>{{vm.mediaFolderCount}}</span>
+            <label>
+                <localize key="unusedMediaDashboard_mediaFolder">Media folders scanned</localize>:
+            </label>
+            <span ng-bind="vm.mediaFolderCount || 0"></span>
         </div>
-        
+
         <div style="margin: 15px 0; display: flex; align-items: center; gap: 10px;">
             <button type="button" class="btn btn-primary" ng-click="vm.startScan()" ng-disabled="vm.scanning">
-                <span ng-if="!vm.scanning"><localize key="unusedMediaDashboard_scanButton">Scan media</localize></span>
-                <span ng-if="vm.scanning"><localize key="unusedMediaDashboard_scanButtonScanning">Scanning media...</localize></span>
+                <span ng-if="!vm.scanning">
+                    <localize key="unusedMediaDashboard_scanButton">Scan media</localize>
+                </span>
+                <span ng-if="vm.scanning">
+                    <localize key="unusedMediaDashboard_scanButtonScanning">Scanning media...</localize>
+                </span>
             </button>
             <button type="button" class="btn btn-default" ng-click="vm.clearScan()" ng-disabled="vm.scanning">
                 <localize key="unusedMediaDashboard_clearScan">Clear scan</localize>
@@ -36,14 +46,18 @@
         <hr ng-if="vm.showProgress" />
 
         <div ng-if="vm.showProgress" style="margin-top: 20px;">
-            <h3><localize key="unusedMediaDashboard_progress">Progress</localize></h3>
+            <h3>
+                <localize key="unusedMediaDashboard_progress">Progress</localize>
+            </h3>
 
             <div class="progress">
                 <div class="bar" ng-style="{width: vm.progressPercentage + '%'}">{{vm.progressPercentage}}%</div>
             </div>
 
             <p>
-                <strong><localize key="unusedMediaDashboard_processed">Processed</localize>:</strong>
+                <strong>
+                    <localize key="unusedMediaDashboard_processed">Processed</localize>:
+                </strong>
                 {{vm.currentStatus.progress}} / {{vm.currentStatus.total}}
             </p>
 
@@ -55,7 +69,9 @@
                 </ul>
 
                 <div ng-if="vm.currentStatus.errors.length > 0" class="error-message">
-                    <strong><localize key="unusedMediaDashboard_errors">Errors</localize>:</strong>
+                    <strong>
+                        <localize key="unusedMediaDashboard_errors">Errors</localize>:
+                    </strong>
                     <ul>
                         <li ng-repeat="error in vm.currentStatus.errors track by $index">{{error}}</li>
                     </ul>
@@ -65,23 +81,31 @@
 
         <hr />
 
-        <h3><localize key="unusedMediaDashboard_title">Unused media</localize></h3>
+        <h3>
+            <localize key="unusedMediaDashboard_title">Unused media</localize>
+        </h3>
         <table class="table" ng-if="vm.media.length > 0">
             <thead>
                 <tr>
-                    <th><localize key="unusedMediaDashboard_name">Name</localize></th>
-                    <th><localize key="unusedMediaDashboard_lastEdited">Last updated</localize></th>
-                    <th><localize key="unusedMediaDashboard_totalBytes">Size</localize></th>
+                    <th>
+                        <localize key="unusedMediaDashboard_name">Name</localize>
+                    </th>
+                    <th>
+                        <localize key="unusedMediaDashboard_lastEdited">Last updated</localize>
+                    </th>
+                    <th>
+                        <localize key="unusedMediaDashboard_totalBytes">Size</localize>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="item in vm.media">
+                <tr ng-repeat="item in vm.media track by item.id">
                     <td>
-                        <a href="/umbraco/#/media/media/edit/{{item.id}}" target="_blank">{{item.name}}</a>
+                        <a ng-href="/umbraco/#/media/media/edit/{{item.id}}" target="_blank" ng-bind="item.name"></a>
                     </td>
-                    <td>{{item.updateDate | date:'yyyy-MM-dd HH:mm'}}</td>
-                    <td>{{item.totalBytes | umbFileSize}}</td>
+                    <td ng-bind="item.updateDateFormatted"></td>
+                    <td ng-bind="item.totalBytesFormatted"></td>
                     <td>
                         <button type="button" class="btn btn-small btn-danger" ng-click="vm.openDeleteOverlay(item)">
                             <localize key="unusedMediaDashboard_delete">Delete</localize>
@@ -91,16 +115,14 @@
             </tbody>
         </table>
         <div ng-if="vm.media.length === 0">
-            <p><localize key="unusedMediaDashboard_noMediaFound">No unused media found.</localize></p>
+            <p>
+                <localize key="unusedMediaDashboard_noMediaFound">No unused media found.</localize>
+            </p>
         </div>
 
     </div>
 
-    <umb-overlay
-        ng-if="vm.overlay.show"
-        overlay="vm.overlay"
-        on-submit="vm.overlay.submit"
-        on-close="vm.overlay.close">
+    <umb-overlay ng-if="vm.overlay.show" overlay="vm.overlay" on-submit="vm.overlay.submit" on-close="vm.overlay.close">
     </umb-overlay>
 
 </div>

@@ -13,8 +13,8 @@ namespace Limbo.Umbraco.UnusedMedia.Composers;
 public class UnusedMediaComposer : IComposer {
     public void Compose(IUmbracoBuilder builder) {
         builder.Services.AddTransient<SqlHelper>();
-        builder.Services.AddTransient<DeepScanProvider>();
-        builder.Services.AddTransient<RedirectsProvider>();
+        builder.Services.AddSingleton<DeepScanProvider>();
+        builder.Services.AddSingleton<RedirectsProvider>();
         
         // Register UnusedMediaService and scheduling services
         builder.Services.AddSingleton<UnusedMediaService>();

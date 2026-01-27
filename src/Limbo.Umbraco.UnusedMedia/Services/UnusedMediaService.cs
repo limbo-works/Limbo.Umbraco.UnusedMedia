@@ -81,11 +81,7 @@ public class UnusedMediaService {
         });
 
         _backgroundTaskQueue.QueueBackgroundWorkItem(token => {
-            // Need to create a new scope for the UnusedMediaService here because it's a transient dependency
-            using (var scope = _serviceProvider.CreateScope()) {
-                var unusedMediaService = scope.ServiceProvider.GetRequiredService<UnusedMediaService>();
-                unusedMediaService.RunScanProcess(taskId);
-            }
+            RunScanProcess(taskId);
             return Task.CompletedTask;
         });
 
@@ -116,10 +112,14 @@ public class UnusedMediaService {
                 // Get all media GUIDs from the SQL helper
                 var allMediaGuids = _sqlHelper.GetAllMediaGuids();
                 status.Total = allMediaGuids.Count;
+                _logger.LogInformation("Starting scan of {TotalCount} media items", status.Total);
 
                 var unusedMediaItems = new List<UnusedMediaItem>();
                 int processedCount = 0;
-                int mediaFolderCount = 0; // This will need proper calculation if folders are to be counted.
+                int mediaFolderCount = 0;
+                int filteredByRelations = 0;
+                int filteredByDeepScan = 0;
+                int filteredByRedirects = 0;
 
                 foreach (var mediaGuid in allMediaGuids) {
                     processedCount++;
@@ -128,28 +128,49 @@ public class UnusedMediaService {
                     if (processedCount % 10 == 0 || processedCount == status.Total) {
                          status.ProcessedMedia.Add($"Processing media: {mediaGuid}");
                     }
+                    _logger.LogDebug("Processing media with GUID: {MediaGuid}", mediaGuid);
 
                     IMedia? mediaItem = _mediaService.GetById(mediaGuid);
                     if (mediaItem == null) {
                         status.Errors.Add($"Media item with GUID {mediaGuid} not found.");
+                        _logger.LogWarning("Media item with GUID {MediaGuid} not found.", mediaGuid);
                         continue;
                     }
 
                     string mediaUdi = mediaItem.GetUdi().ToString();
 
                     // Check if media is used by relations
-                    if (_sqlHelper.IsMediaUsedInRelations(mediaGuid)) continue;
+                    if (_sqlHelper.IsMediaUsedInRelations(mediaGuid)) {
+                        _logger.LogDebug("Media {MediaUdi} is used in relations.", mediaUdi);
+                        filteredByRelations++;
+                        continue;
+                    }
 
                     // Check if media is used by DeepScanProvider
-                    if (_deepScanProvider.IsMediaUsed(mediaUdi)) continue;
+                    if (_deepScanProvider.IsMediaUsed(mediaUdi)) {
+                        _logger.LogDebug("Media {MediaUdi} is used by DeepScanProvider.", mediaUdi);
+                        filteredByDeepScan++;
+                        continue;
+                    }
 
                     // Check if media is used by RedirectsProvider
-                    if (_redirectsProvider.IsMediaUsed(mediaUdi)) continue;
+                    if (_redirectsProvider.IsMediaUsed(mediaUdi)) {
+                        _logger.LogDebug("Media {MediaUdi} is used by RedirectsProvider.", mediaUdi);
+                        filteredByRedirects++;
+                        continue;
+                    }
                     
                     // Add other providers here if needed
                     
                     unusedMediaItems.Add(new UnusedMediaItem(mediaItem));
+                    _logger.LogDebug("Media {MediaUdi} is identified as unused.", mediaUdi);
                 }
+
+                _logger.LogInformation(
+                    "Scan completed: {TotalCount} total media, {FilteredByRelations} filtered by relations, " +
+                    "{FilteredByDeepScan} filtered by content scan, {FilteredByRedirects} filtered by redirects, " +
+                    "{UnusedCount} unused media found",
+                    status.Total, filteredByRelations, filteredByDeepScan, filteredByRedirects, unusedMediaItems.Count);
 
                 _lastUnusedMediaReport = new UnusedMediaReport(unusedMediaItems, DateTime.Now, mediaFolderCount);
                 _lastScanDate = DateTime.Now;

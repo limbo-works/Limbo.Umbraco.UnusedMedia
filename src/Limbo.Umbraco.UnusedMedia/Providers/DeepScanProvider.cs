@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.DependencyInjection; // Added for IServiceScopeFactory
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
@@ -11,13 +12,15 @@ namespace Limbo.Umbraco.UnusedMedia.Providers;
 
 public class DeepScanProvider {
 
-    private readonly IServiceScopeFactory _serviceScopeFactory; // Changed dependency
-    private readonly Lazy<HashSet<string>> _usedMediaUdis; // Use Lazy for deferred execution
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly ILogger<DeepScanProvider> _logger;
+    private readonly Lazy<HashSet<string>> _usedMediaUdis;
     private static readonly Regex MediaUdiRegex = new Regex(@"(umb:\/\/media\/([0-9a-fA-F]{32}))", RegexOptions.Compiled);
 
-    public DeepScanProvider(IServiceScopeFactory serviceScopeFactory) { // Changed constructor
+    public DeepScanProvider(IServiceScopeFactory serviceScopeFactory, ILogger<DeepScanProvider> logger) {
         _serviceScopeFactory = serviceScopeFactory;
-        _usedMediaUdis = new Lazy<HashSet<string>>(ScanForUsedMediaUdis); // Initialize Lazy
+        _logger = logger;
+        _usedMediaUdis = new Lazy<HashSet<string>>(ScanForUsedMediaUdis);
     }
 
     /// <summary>
@@ -26,15 +29,20 @@ public class DeepScanProvider {
     /// </summary>
     /// <returns>A HashSet of media UDIs found in content properties.</returns>
     private HashSet<string> ScanForUsedMediaUdis() {
+        _logger.LogInformation("DeepScanProvider: Starting scan for used media UDIs in content");
         var usedMediaUdis = new HashSet<string>();
+        int contentCount = 0;
+        int propertyCount = 0;
         
-        using (var scope = _serviceScopeFactory.CreateScope()) { // Create a new scope
+        using (var scope = _serviceScopeFactory.CreateScope()) {
             var publishedContentQuery = scope.ServiceProvider.GetRequiredService<IPublishedContentQuery>();
             var rootContent = publishedContentQuery.ContentAtRoot();
 
             foreach (var content in rootContent) {
                 foreach (var descendant in content.DescendantsOrSelf()) {
+                    contentCount++;
                     foreach (var property in descendant.Properties) {
+                        propertyCount++;
                         var value = property.GetValue()?.ToString();
                         if (string.IsNullOrWhiteSpace(value)) {
                             continue;
@@ -42,13 +50,16 @@ public class DeepScanProvider {
 
                         var matches = MediaUdiRegex.Matches(value);
                         foreach (Match match in matches) {
-                            usedMediaUdis.Add(match.Groups[1].Value); // Add the full UDI
+                            usedMediaUdis.Add(match.Groups[1].Value);
                         }
                     }
                 }
             }
         }
 
+        _logger.LogInformation("DeepScanProvider: Scanned {ContentCount} content items with {PropertyCount} properties, found {MediaCount} unique media UDIs", 
+            contentCount, propertyCount, usedMediaUdis.Count);
+        
         return usedMediaUdis;
     }
 
@@ -58,7 +69,7 @@ public class DeepScanProvider {
     /// <param name="mediaUdi">The UDI of the media item to check (e.g., "umb://media/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx").</param>
     /// <returns><c>true</c> if the media is used; otherwise, <c>false</c>.</returns>
     public bool IsMediaUsed(string mediaUdi) {
-        return _usedMediaUdis.Value.Contains(mediaUdi); // Access .Value to trigger lazy evaluation
+        return _usedMediaUdis.Value.Contains(mediaUdi);
     }
 
 }

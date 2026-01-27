@@ -42,11 +42,46 @@ angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard.Contro
         vm.getUnusedMedia();
     }
 
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
     vm.getUnusedMedia = function () {
         $http.get("/umbraco/backoffice/api/UnusedMediaBackOffice/GetUnusedMedia").then(function (response) {
-            vm.media = response.data.media;
-            vm.scanDate = response.data.scanDate;
-            vm.mediaFolderCount = response.data.mediaFolderCount;
+            console.log("GetUnusedMedia response:", response.data);
+
+            // Format dates and file sizes in each media item to prevent digest loop
+            vm.media = (response.data.media || []).map(function (item) {
+                // Format update date
+                if (item.updateDate) {
+                    var date = new Date(item.updateDate);
+                    item.updateDateFormatted = date.toISOString().replace('T', ' ').substring(0, 16);
+                } else {
+                    item.updateDateFormatted = 'N/A';
+                }
+
+                // Format file size
+                item.totalBytesFormatted = formatFileSize(item.totalBytes || 0);
+
+                return item;
+            });
+
+            // Format scanDate to prevent digest loop
+            if (response.data.scanDate) {
+                var date = new Date(response.data.scanDate);
+                vm.scanDate = date.toISOString().replace('T', ' ').substring(0, 16);
+            } else {
+                vm.scanDate = "N/A";
+            }
+
+            vm.mediaFolderCount = response.data.mediaFolderCount || 0;
+            console.log("vm.media:", vm.media);
+            console.log("vm.media.length:", vm.media.length);
         });
     };
 
