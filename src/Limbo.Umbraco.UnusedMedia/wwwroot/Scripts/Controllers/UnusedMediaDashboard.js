@@ -131,7 +131,7 @@
     vm.openDeleteOverlay = function (media) {
         overlayService.confirm({
             title: "Slet media",
-            subtitle: "Er du sikker på, at du vil slette " + media.name + "? Denne handling kan ikke fortrydes.",
+            subtitle: "Er du sikker på, at du vil slette " + media.name + "?",
             submitButtonLabel: "Slet",
             closeButtonLabel: "Annuller",
             submitButtonStyle: "danger",
