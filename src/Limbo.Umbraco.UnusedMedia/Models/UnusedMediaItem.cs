@@ -26,7 +26,13 @@ public class UnusedMediaItem {
     [JsonProperty("totalBytes")]
     public long TotalBytes { get; set; }
 
-    public UnusedMediaItem(IMedia media) {
+    [JsonProperty("creatorName")]
+    public string? CreatorName { get; set; }
+
+    [JsonProperty("writerName")]
+    public string? WriterName { get; set; }
+
+    public UnusedMediaItem(IMedia media, string? creatorName, string? writerName) {
         Id = media.Id;
         Key = media.Key;
         Name = media.Name;
@@ -34,6 +40,8 @@ public class UnusedMediaItem {
         CreateDate = media.CreateDate;
         UpdateDate = media.UpdateDate;
         TotalBytes = media.GetValue<long>("umbracoBytes");
+        CreatorName = creatorName;
+        WriterName = writerName;
     }
 
 }

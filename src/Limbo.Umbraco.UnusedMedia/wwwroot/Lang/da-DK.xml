@@ -23,6 +23,8 @@
 		<key alias="scanDate">Seneste scanning</key>
 		<key alias="name">Navn</key>
 		<key alias="lastEdited">Sidst opdateret</key>
+		<key alias="createdBy">Oprettet af</key>
+		<key alias="changedBy">Ændret af</key>
 		<key alias="totalBytes">Størrelse</key>
 		<key alias="delete">Slet</key>
 		<key alias="confirmDeleteTitle">Slet media</key>

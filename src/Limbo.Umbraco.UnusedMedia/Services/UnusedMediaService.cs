@@ -24,6 +24,7 @@ public class UnusedMediaService {
     private readonly SqlHelper _sqlHelper;
     private readonly DeepScanProvider _deepScanProvider;
     private readonly RedirectsProvider _redirectsProvider;
+    private readonly IUserService _userService;
 
 
     // A concurrent dictionary to store the progress of each task
@@ -39,7 +40,8 @@ public class UnusedMediaService {
                               IUmbracoContextFactory umbracoContextFactory,
                               SqlHelper sqlHelper,
                               DeepScanProvider deepScanProvider,
-                              RedirectsProvider redirectsProvider) {
+                              RedirectsProvider redirectsProvider,
+                              IUserService userService) {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _backgroundTaskQueue = backgroundTaskQueue;
@@ -49,6 +51,7 @@ public class UnusedMediaService {
         _sqlHelper = sqlHelper;
         _deepScanProvider = deepScanProvider;
         _redirectsProvider = redirectsProvider;
+        _userService = userService;
     }
 
     public UnusedMediaReport GetUnusedMediaReport() {
@@ -135,6 +138,16 @@ public class UnusedMediaService {
                 int filteredByExplicitUsage = 0;
                 int filteredFolders = 0;
 
+                var userCache = new Dictionary<int, string?>();
+                string? GetUserName(int userId) {
+                    //if (userId == Constants.Security.SuperUserId) return "Admin";
+                    //if (userId < 0) return "System";
+                    if (userCache.TryGetValue(userId, out string? name)) return name;
+                    name = _userService.GetUserById(userId)?.Name;
+                    userCache[userId] = name;
+                    return name;
+                }
+
                 foreach (var mediaGuid in allMediaGuids) {
                     processedCount++;
                     status.Progress = processedCount;
@@ -190,7 +203,9 @@ public class UnusedMediaService {
 
                     // If we get here, the item is not explicitly used, and not a relation.
                     // Add to candidates. We will check parent folder usage after the loop.
-                    unusedCandidates.Add(new UnusedMediaItem(mediaItem));
+                    string? creatorName = GetUserName(mediaItem.CreatorId);
+                    string? writerName = GetUserName(mediaItem.WriterId);
+                    unusedCandidates.Add(new UnusedMediaItem(mediaItem, creatorName, writerName));
                 }
 
                 // FINAL PASS: Filter candidates based on Used Folder Paths

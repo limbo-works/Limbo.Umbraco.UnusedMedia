@@ -23,6 +23,8 @@
 		<key alias="scanDate">Latest scan</key>
 		<key alias="name">Name</key>
 		<key alias="lastEdited">Last updated</key>
+		<key alias="createdBy">Created by</key>
+		<key alias="changedBy">Changed by</key>
 		<key alias="totalBytes">Size</key>
 		<key alias="delete">Delete</key>
 		<key alias="confirmDeleteTitle">Delete media</key>

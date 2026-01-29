@@ -77,6 +77,12 @@
                         <localize key="unusedMediaDashboard_lastEdited">Last updated</localize>
                     </th>
                     <th>
+                        <localize key="unusedMediaDashboard_createdBy">Created by</localize>
+                    </th>
+                    <th>
+                        <localize key="unusedMediaDashboard_changedBy">Changed by</localize>
+                    </th>
+                    <th>
                         <localize key="unusedMediaDashboard_totalBytes">Size</localize>
                     </th>
                     <th></th>
@@ -88,6 +94,8 @@
                         <a ng-href="/umbraco/#/media/media/edit/{{item.id}}" target="_blank" ng-bind="item.name"></a>
                     </td>
                     <td ng-bind="item.updateDateFormatted"></td>
+                    <td ng-bind="item.creatorName || '-'"></td>
+                    <td ng-bind="item.writerName || '-'"></td>
                     <td ng-bind="item.totalBytesFormatted"></td>
                     <td>
                         <button type="button" class="btn btn-small btn-danger" ng-click="vm.openDeleteOverlay(item)">
