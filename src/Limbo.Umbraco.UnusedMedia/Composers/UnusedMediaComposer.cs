@@ -1,17 +1,34 @@
-﻿using Limbo.Umbraco.UnusedMedia.Helpers;
+using Limbo.Umbraco.UnusedMedia.Dashboards;
+using Limbo.Umbraco.UnusedMedia.Helpers;
+using Limbo.Umbraco.UnusedMedia.Manifests;
+using Limbo.Umbraco.UnusedMedia.Models;
+using Limbo.Umbraco.UnusedMedia.Providers;
+using Limbo.Umbraco.UnusedMedia.Scheduling; // Add this using statement
 using Limbo.Umbraco.UnusedMedia.Services;
-using Umbraco.Core;
-using Umbraco.Core.Composing;
+using Microsoft.Extensions.DependencyInjection;
+using Umbraco.Cms.Core.Composing;
+using Umbraco.Cms.Core.DependencyInjection;
 
-namespace Limbo.Umbraco.UnusedMedia.Composers {
+namespace Limbo.Umbraco.UnusedMedia.Composers;
 
-    public class UnusedMediaComposer : IUserComposer {
+public class UnusedMediaComposer : IComposer {
+    public void Compose(IUmbracoBuilder builder) {
+        builder.Services.AddTransient<SqlHelper>();
+        builder.Services.AddSingleton<DeepScanProvider>();
+        builder.Services.AddSingleton<RedirectsProvider>();
+
+        builder.Services.AddOptions<UnusedMediaSettings>()
+            .Bind(builder.Config.GetSection("Limbo:UnusedMedia"));
         
-        public void Compose(Composition composition) {
-            composition.Register<UnusedMediaService>();
-            composition.Register<UnusedMediaBackOfficeHelper>();
-        }
+        // Register UnusedMediaService and scheduling services
+        builder.Services.AddSingleton<UnusedMediaService>();
+        builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+        builder.Services.AddHostedService<QueuedHostedService>();
 
+        // Register the MediaCleanupBackgroundService as a hosted service
+        builder.Services.AddHostedService<MediaCleanupBackgroundService>();
+
+        builder.Dashboards().Add<UnusedMediaDashboard>();
+        builder.ManifestFilters().Append<UnusedMediaManifest>();
     }
-
 }

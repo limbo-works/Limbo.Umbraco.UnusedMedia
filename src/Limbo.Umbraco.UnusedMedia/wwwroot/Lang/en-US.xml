@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
+<language alias="en" intName="English (US)" localName="English (US)" lcid="" culture="en-US">
+	<area alias="dashboardTabs">
+		<key alias="LimboEditorsSendMessage">Send messages</key>
+		<key alias="LimboEditorsLastEdited">Last edited</key>
+		<key alias="LimboEditorsChangeEditor">Change editor</key>
+		<key alias="LimboUnusedMedia">Unused media</key>
+	</area>
+	<area alias="unusedMediaDashboard">
+		<key alias="title">Unused media</key>
+		<key alias="description">This dashboard shows media that is likely not being used on the site.</key>
+		<key alias="scanButton">Scan media</key>
+		<key alias="scanButtonScanning">Scanning media...</key>
+		<key alias="progress">Progress</key>
+		<key alias="processed">Processed</key>
+		<key alias="status">Status</key>
+		<key alias="errors">Errors</key>
+		<key alias="clearScan">Clear scan</key>
+		<key alias="scanDate">Latest scan</key>
+		<key alias="name">Name</key>
+		<key alias="lastEdited">Last updated</key>
+		<key alias="createdBy">Created by</key>
+		<key alias="changedBy">Changed by</key>
+		<key alias="totalBytes">Size</key>
+		<key alias="delete">Delete</key>
+		<key alias="confirmDeleteTitle">Delete media</key>
+		<key alias="confirmDeleteMessage">Are you sure you want to delete {{name}}?</key>
+		<key alias="noMediaFound">No unused media found.</key>
+	</area>
+</language>
