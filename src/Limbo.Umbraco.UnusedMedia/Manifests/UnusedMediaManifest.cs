@@ -12,7 +12,6 @@ public class UnusedMediaManifest : IManifestFilter {
             Version = UnusedMediaPackage.InformationalVersion,
             BundleOptions = BundleOptions.Independent,
             Scripts = new[] {
-                $"/App_Plugins/Skybrud.Essentials/Scripts/App.js",
                 $"/App_Plugins/{UnusedMediaPackage.Alias}/Scripts/Controllers/UnusedMediaDashboard.js"
             },
             Stylesheets = new[] {
