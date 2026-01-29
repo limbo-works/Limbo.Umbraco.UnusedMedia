@@ -18,22 +18,6 @@ angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard.Contro
     let pollInterval = null;
     let currentTaskId = null;
 
-    vm.overlay = {
-        view: "/umbraco/views/overlays/default/default.html",
-        show: false,
-        title: "Delete media",
-        subtitle: "Are you sure you want to delete this media? This action cannot be undone.",
-        closeButtonLabel: "Cancel",
-        submitButtonLabel: "Delete",
-        submitButtonStyle: "danger",
-        close: function () {
-            vm.overlay.show = false;
-        },
-        submit: function () {
-            vm.deleteMedia(vm.overlay.media);
-            vm.overlay.show = false;
-        }
-    }
 
     function init() {
         localizationService.localize("unusedMediaDashboard_title").then(function (value) { vm.page.title = value; });
@@ -148,10 +132,20 @@ angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard.Contro
     };
 
     vm.openDeleteOverlay = function (media) {
-        vm.overlay.media = media;
-        localizationService.localize("unusedMediaDashboard_confirmDeleteTitle").then(function (value) { vm.overlay.title = value; });
-        localizationService.localize("unusedMediaDashboard_confirmDeleteMessage", [media.name]).then(function (value) { vm.overlay.subtitle = value; });
-        vm.overlay.show = true;
+        overlayService.confirm({
+            title: "Slet media",
+            subtitle: "Er du sikker på, at du vil slette " + media.name + "? Denne handling kan ikke fortrydes.",
+            submitButtonLabel: "Slet",
+            closeButtonLabel: "Annuller",
+            submitButtonStyle: "danger",
+            submit: function () {
+                vm.deleteMedia(media);
+                overlayService.close();
+            },
+            close: function () {
+                overlayService.close();
+            }
+        });
     };
 
     vm.deleteMedia = function (media) {

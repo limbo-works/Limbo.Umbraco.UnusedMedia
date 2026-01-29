@@ -256,7 +256,7 @@ public class UnusedMediaService {
     public void DeleteMedia(int mediaId) {
         var media = _mediaService.GetById(mediaId);
         if (media != null) {
-            _mediaService.Delete(media);
+            _mediaService.MoveToRecycleBin(media);
             _logger.LogInformation("Deleted media with ID: {MediaId}", mediaId);
             // Refresh the report after deletion
             if (_lastUnusedMediaReport != null) {

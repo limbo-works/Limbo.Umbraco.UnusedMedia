@@ -28,7 +28,7 @@
 		<key alias="totalBytes">Størrelse</key>
 		<key alias="delete">Slet</key>
 		<key alias="confirmDeleteTitle">Slet media</key>
-		<key alias="confirmDeleteMessage">Er du sikker på, at du vil slette {{name}}? Denne handling kan ikke fortrydes.</key>
+		<key alias="confirmDeleteMessage">Er du sikker på, at du vil slette {{name}}?</key>
 		<key alias="noMediaFound">Ingen ubenyttet media fundet.</key>
 	</area>
 </language>

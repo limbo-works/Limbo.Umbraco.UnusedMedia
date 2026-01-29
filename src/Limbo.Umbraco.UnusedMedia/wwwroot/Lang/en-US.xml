@@ -28,7 +28,7 @@
 		<key alias="totalBytes">Size</key>
 		<key alias="delete">Delete</key>
 		<key alias="confirmDeleteTitle">Delete media</key>
-		<key alias="confirmDeleteMessage">Are you sure you want to delete {{name}}? This action cannot be undone.</key>
+		<key alias="confirmDeleteMessage">Are you sure you want to delete {{name}}?</key>
 		<key alias="noMediaFound">No unused media found.</key>
 	</area>
 </language>
