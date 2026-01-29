@@ -12,9 +12,6 @@
 		<key alias="description">Dette dashboard viser media, som sandsynligvis ikke bliver brugt på sitet.</key>
 		<key alias="scanButton">Scan media</key>
 		<key alias="scanButtonScanning">Scanner media...</key>
-		<key alias="mediaCount">Antal media</key>
-		<key alias="mediaFolder">Media mappe</key>
-		<key alias="folderScanCount">Antal mapper scannet</key>
 		<key alias="progress">Fremdrift</key>
 		<key alias="processed">Behandlet</key>
 		<key alias="status">Status</key>

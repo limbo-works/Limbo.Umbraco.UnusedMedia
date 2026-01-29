@@ -12,9 +12,6 @@
 		<key alias="description">This dashboard shows media that is likely not being used on the site.</key>
 		<key alias="scanButton">Scan media</key>
 		<key alias="scanButtonScanning">Scanning media...</key>
-		<key alias="mediaCount">Media count</key>
-		<key alias="mediaFolder">Media folder</key>
-		<key alias="folderScanCount">Folder scan count</key>
 		<key alias="progress">Progress</key>
 		<key alias="processed">Processed</key>
 		<key alias="status">Status</key>

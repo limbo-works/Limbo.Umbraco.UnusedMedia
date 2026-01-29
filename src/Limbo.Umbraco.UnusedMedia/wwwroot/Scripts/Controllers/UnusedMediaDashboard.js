@@ -9,7 +9,6 @@ angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard.Contro
 
     vm.scanDate = null;
     vm.media = [];
-    vm.mediaFolderCount = 0;
     vm.scanning = false;
     vm.showProgress = false;
     vm.currentStatus = null;
@@ -63,7 +62,6 @@ angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard.Contro
                 vm.scanDate = "N/A";
             }
 
-            vm.mediaFolderCount = response.data.mediaFolderCount || 0;
             console.log("vm.media:", vm.media);
             console.log("vm.media.length:", vm.media.length);
         });
@@ -73,7 +71,6 @@ angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard.Contro
         $http.post("/umbraco/backoffice/api/UnusedMediaBackOffice/ClearScan").then(function (response) {
             vm.media = [];
             vm.scanDate = null;
-            vm.mediaFolderCount = 0;
             notificationsService.success("Success", "Scan data cleared.");
         });
     };

@@ -15,19 +15,6 @@
             <span ng-bind="vm.scanDate"></span>
         </div>
 
-        <div style="margin-bottom: 15px;">
-            <label>
-                <localize key="unusedMediaDashboard_mediaCount">Media count</localize>:
-            </label>
-            <span ng-bind="vm.media.length || 0"></span>
-        </div>
-
-        <div style="margin-bottom: 15px;">
-            <label>
-                <localize key="unusedMediaDashboard_mediaFolder">Media folders scanned</localize>:
-            </label>
-            <span ng-bind="vm.mediaFolderCount || 0"></span>
-        </div>
 
         <div style="margin: 15px 0; display: flex; align-items: center; gap: 10px;">
             <button type="button" class="btn btn-primary" ng-click="vm.startScan()" ng-disabled="vm.scanning">
