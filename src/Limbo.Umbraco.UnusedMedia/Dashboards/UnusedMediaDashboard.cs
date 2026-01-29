@@ -20,7 +20,7 @@ public class UnusedMediaDashboard : IDashboard {
 
     public IAccessRule[] AccessRules {
         get {
-            if (_settings.AdminGroups.Length == 0) return Array.Empty<IAccessRule>();
+            if (_settings?.AdminGroups == null || _settings.AdminGroups.Length == 0) return Array.Empty<IAccessRule>();
             return new IAccessRule[] {
                 new AccessRule {
                     Type = AccessRuleType.Grant,

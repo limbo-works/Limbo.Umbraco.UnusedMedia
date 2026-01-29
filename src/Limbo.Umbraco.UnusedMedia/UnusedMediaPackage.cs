@@ -15,15 +15,12 @@ public class UnusedMediaPackage {
     /// <summary>
     /// Gets the version of the package.
     /// </summary>
-    public static readonly Version Version = typeof(UnusedMediaPackage).Assembly
-        .GetName().Version!;
+    public static readonly Version Version = typeof(UnusedMediaPackage).Assembly.GetName().Version ?? new Version(0, 0, 0);
 
     /// <summary>
     /// Gets the informational version of the package.
     /// </summary>
-    public static readonly string InformationalVersion = FileVersionInfo
-        .GetVersionInfo(typeof(UnusedMediaPackage).Assembly.Location).ProductVersion!
-        .Split('+')[0];
+    public static readonly string InformationalVersion = FileVersionInfo.GetVersionInfo(typeof(UnusedMediaPackage).Assembly.Location).ProductVersion?.Split('+')[0] ?? "0.0.0";
 
     /// <summary>
     /// Gets the semantic version of the package.

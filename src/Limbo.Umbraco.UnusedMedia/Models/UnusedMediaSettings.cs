@@ -2,6 +2,11 @@ namespace Limbo.Umbraco.UnusedMedia.Models;
 
 public class UnusedMediaSettings {
 
-    public string[] AdminGroups { get; set; } = Array.Empty<string>();
+    private string[]? _adminGroups;
+
+    public string[] AdminGroups {
+        get => _adminGroups ?? Array.Empty<string>();
+        set => _adminGroups = value;
+    }
 
 }

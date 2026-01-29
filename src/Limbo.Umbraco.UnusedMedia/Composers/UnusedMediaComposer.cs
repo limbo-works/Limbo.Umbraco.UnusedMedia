@@ -5,6 +5,7 @@ using Limbo.Umbraco.UnusedMedia.Models;
 using Limbo.Umbraco.UnusedMedia.Providers;
 using Limbo.Umbraco.UnusedMedia.Scheduling; // Add this using statement
 using Limbo.Umbraco.UnusedMedia.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
@@ -17,8 +18,12 @@ public class UnusedMediaComposer : IComposer {
         builder.Services.AddSingleton<DeepScanProvider>();
         builder.Services.AddSingleton<RedirectsProvider>();
 
-        builder.Services.AddOptions<UnusedMediaSettings>()
-            .Bind(builder.Config.GetSection("Limbo:UnusedMedia"));
+        if (builder.Config != null) {
+            var section = builder.Config.GetSection("Limbo:UnusedMedia");
+            if (section.Exists()) {
+                builder.Services.Configure<UnusedMediaSettings>(section);
+            }
+        }
         
         // Register UnusedMediaService and scheduling services
         builder.Services.AddSingleton<UnusedMediaService>();
