@@ -1,4 +1,4 @@
-angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard.Controller", function ($scope, $http, localizationService, notificationsService, overlayService, $interval) {
+﻿angular.module("umbraco").controller("Limbo.Umbraco.UnusedMedia.Dashboard.Controller", function ($scope, $http, localizationService, notificationsService, overlayService, $interval) {
 
     const vm = this;
 

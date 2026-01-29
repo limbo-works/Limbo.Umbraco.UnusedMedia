@@ -19,7 +19,7 @@ A powerful Umbraco package designed to help content editors and administrators i
 
 - **Progress Reporting**: Provides real-time updates on the scanning process directly within the dashboard.
 
-- **Detailed Report**: Displays a list of potentially unused media items, including their name, last update date, and size.
+- **Detailed Report**: Displays a list of potentially unused media items, including their name, creator, last updated by, last update date, and size.
 
 - **Direct Deletion**: Allows for direct deletion of identified unused media items from the dashboard.
 
@@ -43,7 +43,20 @@ Install-Package Limbo.Umbraco.UnusedMedia
 
 ## Configuration
 
-Currently, this package is designed to work out-of-the-box with minimal configuration. All settings are managed internally or via dependency injection. Future versions might introduce `appsettings.json` options for fine-tuning scan behavior.
+You can configure which user groups have access to the Unused Media dashboard in your `appsettings.json` file. If no groups are specified, any user with access to the **Content** section will be able to see and use the dashboard.
+
+```json
+{
+  "Limbo": {
+    "UnusedMedia": {
+      "AdminGroups": [
+        "admin",
+        "webadministratorer"
+      ]
+    }
+  }
+}
+```
 
 ## Usage (Backoffice Dashboard)
 
@@ -56,12 +69,6 @@ Once installed, a new dashboard will be available in the Umbraco backoffice:
 
 #### Scan Date
 Displays the date and time of the latest completed scan.
-
-#### Media Count
-Shows the number of media items found in the last scan.
-
-#### Media Folders Scanned
-*(Currently not actively calculated, will be enhanced in future versions if needed for detailed reporting).*
 
 #### Scan Media Button
 - Click this button to start a new scan for unused media.
@@ -81,6 +88,8 @@ Clears the current scan results displayed in the dashboard.
 Lists all media items identified as unused:
 
 - **Name**: The name of the media item, with a link to open it in the media section.
+- **Created by**: The name of the user who created the media item.
+- **Changed by**: The name of the user who last updated the media item.
 - **Last Updated**: The date and time the media item was last updated.
 - **Size**: The file size of the media item.
 - **Delete Button**: Allows you to delete the specific media item directly from the report. A confirmation overlay will appear before deletion.
@@ -133,7 +142,7 @@ A model to track the progress and status of a background scan task, including pr
 A model representing the result of an unused media scan, containing a list of `UnusedMediaItems` and metadata about the scan.
 
 #### `UnusedMediaItem.cs`
-A model representing a single unused media item, including its ID, name, update date, and size.
+A model representing a single unused media item, including its ID, name, creator, writer, update date, and size.
 
 #### Background Task Infrastructure
 - **`IBackgroundTaskQueue.cs`**, **`BackgroundTaskQueue.cs`**, **`QueuedHostedService.cs`**: Implement a generic background task queuing mechanism, allowing `UnusedMediaService` to offload long-running scan operations to a background thread without blocking the UI.
