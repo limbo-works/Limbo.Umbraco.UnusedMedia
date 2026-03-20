@@ -41,12 +41,12 @@ public class UnusedMediaScanStatus {
     /// Gets a list of media items that have been processed.
     /// </summary>
     [JsonProperty("processedMedia")]
-    public List<string> ProcessedMedia { get; set; } = new();
+    public List<string> ProcessedMedia { get; set; } = [];
 
     /// <summary>
     /// Gets a list of errors encountered during the process.
     /// </summary>
     [JsonProperty("errors")]
-    public List<string> Errors { get; set; } = new();
+    public List<string> Errors { get; set; } = [];
 
 }
