@@ -3,7 +3,7 @@ using Limbo.Umbraco.UnusedMedia.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using Skybrud.Essentials.Json.Extensions;
+using Skybrud.Essentials.Json.Newtonsoft.Extensions;
 using Umbraco.Cms.Web.BackOffice.Controllers;
 
 namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice;

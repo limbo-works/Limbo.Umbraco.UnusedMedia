@@ -5,6 +5,7 @@ using Limbo.Umbraco.UnusedMedia.Models;
 using Limbo.Umbraco.UnusedMedia.Providers;
 using Limbo.Umbraco.UnusedMedia.Scheduling;
 using Microsoft.Extensions.Logging;
+using Skybrud.Essentials.Collections.Extensions;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
