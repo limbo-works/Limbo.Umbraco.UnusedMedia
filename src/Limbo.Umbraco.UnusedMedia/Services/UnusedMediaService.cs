@@ -106,12 +106,7 @@ public class UnusedMediaService {
                 // 1. Gather all explicitly used media UDIs/GUIDs from providers upfront
                 var explicitUsedGuids = new HashSet<Guid>();
 
-                var deepScanUdis = _deepScanProvider.GetUsedMediaUdis();
-                foreach (var udiStr in deepScanUdis) {
-                    if (UdiParser.TryParse(udiStr, out Udi? udi) && udi is GuidUdi guidUdi) {
-                        explicitUsedGuids.Add(guidUdi.Guid);
-                    }
-                }
+                explicitUsedGuids.AddRange(_deepScanProvider.GetUsedMediaKeys());
 
                 var redirectUdis = _redirectsProvider.GetUsedMediaUdis();
                 foreach (var udiStr in redirectUdis) {
