@@ -1,4 +1,4 @@
-# Limbo.Umbraco.UnusedMedia
+# Limbo Unused Media
 
 A powerful Umbraco package designed to help content editors and administrators identify and manage unused media items within their Umbraco installation. This tool provides a dedicated dashboard in the Umbraco backoffice to scan for media that is not referenced in content properties or redirects, helping to keep your media library clean and optimize site performance.
 
