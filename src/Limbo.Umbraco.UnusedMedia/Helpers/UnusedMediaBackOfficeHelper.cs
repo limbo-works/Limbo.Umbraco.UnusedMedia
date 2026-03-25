@@ -103,11 +103,11 @@ public class UnusedMediaBackOfficeHelper {
 
         int page = Math.Max(request.Query.GetInt32("page"), 1);
 
-        string name = _localizedTextService.Localize("unusedMediaDashboard", "name");
-        string updateDate = _localizedTextService.Localize("unusedMediaDashboard", "updateDate");
-        string creator = _localizedTextService.Localize("unusedMediaDashboard", "creator");
-        string writer = _localizedTextService.Localize("unusedMediaDashboard", "writer");
-        string size = _localizedTextService.Localize("unusedMediaDashboard", "size");
+        string name = Localize("name");
+        string updateDate = Localize("updateDate");
+        string creator = Localize("creator");
+        string writer = Localize("writer");
+        string size = Localize("size");
 
         List<UnusedMediaColumn> columns = [];
         columns.Add(new UnusedMediaColumn("name", name, UnusedMediaColumnType.Name, allowSort: true, defaultOrder: SortOrder.Ascending));
@@ -359,7 +359,7 @@ public class UnusedMediaBackOfficeHelper {
     protected virtual void AppendFoldersFilters(HttpRequest request, IUser currentUser, List<FieldBase> filters) {
 
         // Initialize the list with an item for an empty selection
-        List<ListItem> items = [new("", _localizedTextService.Localize("unusedMediaDashboard", "selectFolder"))];
+        List<ListItem> items = [new("", Localize("selectFolder"))];
 
         if (!_umbracoContextAccessor.TryGetUmbracoContext(out var umbracoContext)) {
             return;
@@ -426,6 +426,14 @@ public class UnusedMediaBackOfficeHelper {
 
     }
 
+    public string Localize(string alias) {
+        return _localizedTextService.Localize("unusedMediaDashboard", alias);
+    }
+
+    public string Localize(string? area, string alias) {
+        return _localizedTextService.Localize(area, alias);
+    }
+
     #endregion
 
     #region Protected member methods
@@ -438,7 +446,7 @@ public class UnusedMediaBackOfficeHelper {
     /// <param name="filters">The list of filters.</param>
     protected virtual void AppendTextFilter(HttpRequest request, IUser currentUser, List<FieldBase> filters) {
         filters.Add(new TextField("text") {
-            Placeholder = _localizedTextService.Localize(null, "typeToSearch")
+            Placeholder = Localize(null, "typeToSearch")
         });
     }
 
@@ -453,11 +461,11 @@ public class UnusedMediaBackOfficeHelper {
         List<ListItem> creators = [];
         List<ListItem> writers = [];
 
-        creators.Add(new ListItem("", _localizedTextService.Localize("unusedMediaDashboard", "createdBy")));
-        creators.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMediaDashboard", "me")));
+        creators.Add(new ListItem("", Localize("createdBy")));
+        creators.Add(new ListItem(currentUser.Id, Localize("me")));
 
-        writers.Add(new ListItem("", _localizedTextService.Localize("unusedMediaDashboard", "updatedBy")));
-        writers.Add(new ListItem(currentUser.Id, _localizedTextService.Localize("unusedMediaDashboard", "me")));
+        writers.Add(new ListItem("", Localize("updatedBy")));
+        writers.Add(new ListItem(currentUser.Id, Localize("me")));
 
         foreach (IUser user in GetUsers(request, currentUser)) {
             if (currentUser.Id == user.Id) {
