@@ -2,16 +2,14 @@
 
 <language alias="da" intName="Danish" localName="dansk" lcid="6" culture="da-DK">
 	<area alias="dashboardTabs">
-		<key alias="LimboEditorsSendMessage">Send beskeder</key>
-		<key alias="LimboEditorsLastEdited">Sidst redigeret</key>
-		<key alias="LimboEditorsChangeEditor">Skift redaktør</key>
-		<key alias="LimboUnusedMedia">Ubenyttet media</key>
+    <key alias="LimboUnusedMedia">Ikke-brugte medier</key>
+    <key alias="unused-media">Ikke-brugte medier</key>
 	</area>
 	<area alias="unusedMediaDashboard">
-		<key alias="title">Ubenyttet media</key>
-		<key alias="description">Dette dashboard viser media, som sandsynligvis ikke bliver brugt på sitet.</key>
-		<key alias="scanButton">Scan media</key>
-		<key alias="scanButtonScanning">Scanner media...</key>
+		<key alias="title">Ikke-brugte medier</key>
+		<key alias="description">Dette dashboard viser medier, som sandsynligvis ikke bliver brugt på sitet.</key>
+		<key alias="scanButton">Scan medier</key>
+		<key alias="scanButtonScanning">Scanner medier...</key>
 		<key alias="progress">Fremdrift</key>
 		<key alias="processed">Behandlet</key>
 		<key alias="status">Status</key>
@@ -19,13 +17,22 @@
 		<key alias="clearScan">Ryd scanning</key>
 		<key alias="scanDate">Seneste scanning</key>
 		<key alias="name">Navn</key>
-		<key alias="lastEdited">Sidst opdateret</key>
+    <key alias="lastEdited">Sidst opdateret</key>
 		<key alias="createdBy">Oprettet af</key>
-		<key alias="changedBy">Ændret af</key>
+    <key alias="changedBy">Ændret af</key>
+    <key alias="updatedBy">Ændret af</key>
 		<key alias="totalBytes">Størrelse</key>
 		<key alias="delete">Slet</key>
-		<key alias="confirmDeleteTitle">Slet media</key>
+		<key alias="confirmDeleteTitle">Slet medie</key>
 		<key alias="confirmDeleteMessage">Er du sikker på, at du vil slette {{name}}?</key>
-		<key alias="noMediaFound">Ingen ubenyttet media fundet.</key>
+		<key alias="noMediaFound">Ingen ubenyttede medier fundet.</key>
+
+
+    <key alias="me">Mig</key>
+    <key alias="selectFolder">Vælg mappe</key>
+    <key alias="updateDate">Sidst opdateret</key>
+    <key alias="creator">Oprettet af</key>
+    <key alias="writer">Ændret af</key>
+    <key alias="size">Størrelse</key>
 	</area>
 </language>

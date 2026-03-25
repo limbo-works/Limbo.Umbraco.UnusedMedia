@@ -1,47 +1,62 @@
+using Limbo.Umbraco.UnusedMedia.Helpers;
 using Newtonsoft.Json;
-using Umbraco.Cms.Core.Models;
+using Skybrud.Essentials.Time;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Extensions;
 
 namespace Limbo.Umbraco.UnusedMedia.Models;
 
 public class UnusedMediaItem {
 
     [JsonProperty("id")]
-    public int Id { get; set; }
+    public int Id { get; }
 
     [JsonProperty("key")]
-    public Guid Key { get; set; }
+    public Guid Key { get; }
 
     [JsonProperty("name")]
-    public string? Name { get; set; }
+    public string Name { get; }
+
+    [JsonProperty("url")]
+    public string Url { get; }
 
     [JsonProperty("path")]
-    public string? Path { get; set; }
+    public string[] Path { get; }
 
     [JsonProperty("createDate")]
-    public DateTime CreateDate { get; set; }
+    public EssentialsTime CreateDate { get; }
 
     [JsonProperty("updateDate")]
-    public DateTime UpdateDate { get; set; }
+    public EssentialsTime UpdateDate { get; }
 
-    [JsonProperty("totalBytes")]
-    public long TotalBytes { get; set; }
+    [JsonProperty("creatorId")]
+    public int CreatorId { get; }
 
     [JsonProperty("creatorName")]
-    public string? CreatorName { get; set; }
+    public string? CreatorName { get; }
+
+    [JsonProperty("writerId")]
+    public int WriterId { get; }
 
     [JsonProperty("writerName")]
-    public string? WriterName { get; set; }
+    public string? WriterName { get; }
 
-    public UnusedMediaItem(IMedia media, string? creatorName, string? writerName) {
+    [JsonProperty("cells")]
+    public IReadOnlyList<UnusedMediaItemCell> Cells { get; }
+
+    public UnusedMediaItem(IPublishedContent media, IReadOnlyList<UnusedMediaItemCell> cells) {
         Id = media.Id;
         Key = media.Key;
         Name = media.Name;
-        Path = media.Path;
+        Url = media.Url();
+        Path = media.Ancestors().Select(x => x.Name).Reverse().ToArray();
         CreateDate = media.CreateDate;
         UpdateDate = media.UpdateDate;
-        TotalBytes = media.GetValue<long>("umbracoBytes");
-        CreatorName = creatorName;
-        WriterName = writerName;
+        CreatorId = media.CreatorId;
+        CreatorName = media.CreatorName();
+        WriterId = media.WriterId;
+        WriterName = media.WriterName();
+        Cells = cells;
     }
 
 }

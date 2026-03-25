@@ -12,11 +12,11 @@ public class UnusedMediaDashboard : IDashboard {
         _settings = settings.Value;
     }
 
-    public string Alias => "LimboUnusedMedia";
+    public string Alias => "unused-media";
 
     public string[] Sections => ["content"];
 
-    public string View => $"/App_Plugins/Limbo.Umbraco.UnusedMedia/Views/UnusedMediaDashboard.html?v={UnusedMediaPackage.SemVersion}";
+    public string View => $"/App_Plugins/Limbo.Umbraco.UnusedMedia/Views/Dashboard.html?v={UnusedMediaPackage.InformationalVersion}";
 
     public IAccessRule[] AccessRules {
         get {

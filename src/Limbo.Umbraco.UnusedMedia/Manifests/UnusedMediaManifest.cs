@@ -5,6 +5,7 @@ namespace Limbo.Umbraco.UnusedMedia.Manifests;
 public class UnusedMediaManifest : IManifestFilter {
 
     public void Filter(List<PackageManifest> manifests) {
+        string cacheBuster = UnusedMediaPackage.InformationalVersion;
         manifests.Add(new PackageManifest {
             AllowPackageTelemetry = true,
             PackageId = UnusedMediaPackage.Alias,
@@ -12,7 +13,8 @@ public class UnusedMediaManifest : IManifestFilter {
             Version = UnusedMediaPackage.InformationalVersion,
             BundleOptions = BundleOptions.Independent,
             Scripts = [
-                $"/App_Plugins/{UnusedMediaPackage.Alias}/Scripts/Controllers/UnusedMediaDashboard.js"
+                "/umbraco/backoffice/api/UnusedMediaBackOffice/importmap.js",
+                $"/App_Plugins/{UnusedMediaPackage.Alias}/Scripts/DashboardController.js?v={cacheBuster}"
             ],
             Stylesheets = [
                 $"/App_Plugins/{UnusedMediaPackage.Alias}/Styles/Default.css"

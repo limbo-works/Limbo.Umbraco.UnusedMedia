@@ -8,18 +8,18 @@ using Umbraco.Extensions;
 
 namespace Limbo.Umbraco.UnusedMedia.Providers;
 
-public class DeepScanProvider {
+public class ContentCacheUsedMediaProvider : UsedMediaProvider {
 
     private static readonly Regex _mediaUdiRegex = new(@"(umb:\/\/media\/([0-9a-fA-F]{32}))", RegexOptions.Compiled);
-    private static readonly Regex _mediaKeyRegex = new("(^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$)", RegexOptions.Compiled);
+    private static readonly Regex _mediaKeyRegex = new("([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})", RegexOptions.Compiled);
 
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    private readonly ILogger<DeepScanProvider> _logger;
+    private readonly ILogger<ContentCacheUsedMediaProvider> _logger;
 
     private HashSet<Guid>? _usedMediaKeys;
     private HashSet<string>? _usedMediaUdis;
 
-    public DeepScanProvider(IServiceScopeFactory serviceScopeFactory, ILogger<DeepScanProvider> logger) {
+    public ContentCacheUsedMediaProvider(IServiceScopeFactory serviceScopeFactory, ILogger<ContentCacheUsedMediaProvider> logger) {
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
     }
@@ -29,7 +29,7 @@ public class DeepScanProvider {
     /// This method is intended to be called once to populate the internal cache.
     /// </summary>
     /// <returns>A HashSet of media keys found in content properties.</returns>
-    private HashSet<Guid> ScanForUsedMediaKeys() {
+    public override HashSet<Guid> ScanForUsedMediaKeys() {
 
         _logger.LogInformation("DeepScanProvider: Starting scan for used media UDIs in content");
 
