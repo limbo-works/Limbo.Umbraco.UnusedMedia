@@ -54,4 +54,8 @@ public class UnusedMediaColumn {
         return new UnusedMediaColumn(alias, name, UnusedMediaColumnType.Text, allowSort, defaultOrder);
     }
 
+    public static UnusedMediaColumn CreateUser(string alias, string name, bool allowSort = false, SortOrder defaultOrder = SortOrder.Ascending) {
+        return new UnusedMediaColumn(alias, name, UnusedMediaColumnType.User, allowSort, defaultOrder);
+    }
+
 }
