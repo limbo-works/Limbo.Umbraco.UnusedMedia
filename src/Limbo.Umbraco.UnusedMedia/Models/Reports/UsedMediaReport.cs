@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using Skybrud.Essentials.Time;
 using Umbraco.Extensions;
 
-namespace Limbo.Umbraco.UnusedMedia.Models;
+namespace Limbo.Umbraco.UnusedMedia.Models.Reports;
 
 public class UsedMediaReport : IUsedMediaReport {
 

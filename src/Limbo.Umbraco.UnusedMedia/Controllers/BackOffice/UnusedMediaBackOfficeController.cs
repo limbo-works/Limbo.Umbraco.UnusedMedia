@@ -1,6 +1,6 @@
 using System.Text;
 using Limbo.Umbraco.UnusedMedia.Helpers;
-using Limbo.Umbraco.UnusedMedia.Models;
+using Limbo.Umbraco.UnusedMedia.Models.Reports;
 using Limbo.Umbraco.UnusedMedia.Providers;
 using Limbo.Umbraco.UnusedMedia.Services;
 using Microsoft.AspNetCore.Authorization;

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Limbo.Umbraco.UnusedMedia.Models.Reports;
+using Newtonsoft.Json;
 using Skybrud.Essentials.Collections;
 using Skybrud.Essentials.Json.Newtonsoft.Converters.Enums;
 

@@ -1,5 +1,5 @@
 ﻿using Examine;
-using Limbo.Umbraco.UnusedMedia.Models;
+using Limbo.Umbraco.UnusedMedia.Models.Settings;
 using Limbo.Umbraco.UnusedMedia.Services;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Services;

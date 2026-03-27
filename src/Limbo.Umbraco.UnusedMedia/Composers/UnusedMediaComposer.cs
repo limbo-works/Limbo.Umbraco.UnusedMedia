@@ -1,7 +1,7 @@
 using Limbo.Umbraco.UnusedMedia.Dashboards;
 using Limbo.Umbraco.UnusedMedia.Helpers;
 using Limbo.Umbraco.UnusedMedia.Manifests;
-using Limbo.Umbraco.UnusedMedia.Models;
+using Limbo.Umbraco.UnusedMedia.Models.Settings;
 using Limbo.Umbraco.UnusedMedia.Notifications.Handlers;
 using Limbo.Umbraco.UnusedMedia.Providers;
 using Limbo.Umbraco.UnusedMedia.Services;

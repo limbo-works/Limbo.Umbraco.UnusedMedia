@@ -1,4 +1,4 @@
-namespace Limbo.Umbraco.UnusedMedia.Models;
+namespace Limbo.Umbraco.UnusedMedia.Models.Settings;
 
 /// <summary>
 /// Class representing the settings for the unused media detection in Umbraco. This class can be used to configure various aspects of the unused media detection, such as dashboard settings and folders to ignore during scanning.

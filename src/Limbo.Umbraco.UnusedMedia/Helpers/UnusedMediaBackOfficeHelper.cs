@@ -1,6 +1,7 @@
 ﻿using Examine;
 using Limbo.Forms.Models.Fields;
 using Limbo.Umbraco.UnusedMedia.Models;
+using Limbo.Umbraco.UnusedMedia.Models.Reports;
 using Limbo.Umbraco.UnusedMedia.Models.Sites;
 using Limbo.Umbraco.UnusedMedia.Services;
 using Microsoft.AspNetCore.Http;

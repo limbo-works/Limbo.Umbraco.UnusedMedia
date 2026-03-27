@@ -1,4 +1,5 @@
 ﻿using Limbo.Umbraco.UnusedMedia.Models;
+using Limbo.Umbraco.UnusedMedia.Models.Reports;
 using Limbo.Umbraco.UnusedMedia.Providers;
 using Microsoft.Extensions.Logging;
 using Skybrud.Essentials.Time;

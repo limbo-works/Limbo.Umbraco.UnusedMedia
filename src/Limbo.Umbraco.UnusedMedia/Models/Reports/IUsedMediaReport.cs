@@ -1,7 +1,7 @@
 ﻿using Skybrud.Essentials.Time;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
-namespace Limbo.Umbraco.UnusedMedia.Models;
+namespace Limbo.Umbraco.UnusedMedia.Models.Reports;
 
 /// <summary>
 /// Interface representing a report over media that is in use.

@@ -1,4 +1,4 @@
-namespace Limbo.Umbraco.UnusedMedia.Models;
+namespace Limbo.Umbraco.UnusedMedia.Models.Settings;
 
 /// <summary>
 /// Class representing settings related to the unused media dashboard in Umbraco. These settings can be used to configure access to the dashboard and specify a custom dashboard element if desired.

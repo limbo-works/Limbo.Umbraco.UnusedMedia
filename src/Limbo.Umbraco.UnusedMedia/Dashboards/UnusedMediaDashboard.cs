@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Dashboards;
-using Limbo.Umbraco.UnusedMedia.Models;
+using Limbo.Umbraco.UnusedMedia.Models.Settings;
 
 namespace Limbo.Umbraco.UnusedMedia.Dashboards;
 
