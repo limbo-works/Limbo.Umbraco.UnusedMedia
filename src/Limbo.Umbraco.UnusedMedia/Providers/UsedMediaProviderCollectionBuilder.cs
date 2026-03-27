@@ -2,7 +2,7 @@
 
 namespace Limbo.Umbraco.UnusedMedia.Providers;
 
-internal sealed class UsedMediaProviderCollectionBuilder : LazyCollectionBuilderBase<UsedMediaProviderCollectionBuilder, UsedMediaProviderCollection, UsedMediaProvider> {
+public sealed class UsedMediaProviderCollectionBuilder : LazyCollectionBuilderBase<UsedMediaProviderCollectionBuilder, UsedMediaProviderCollection, UsedMediaProvider> {
 
     protected override UsedMediaProviderCollectionBuilder This => this;
 

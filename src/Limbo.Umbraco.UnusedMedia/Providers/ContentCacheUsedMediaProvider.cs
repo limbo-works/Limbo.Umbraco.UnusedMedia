@@ -1,7 +1,10 @@
 using System.Text.RegularExpressions;
+using Limbo.Umbraco.UnusedMedia.Models.BlockList;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using Skybrud.Essentials.Collections.Extensions;
+using Skybrud.Essentials.Json.Newtonsoft;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
@@ -74,7 +77,17 @@ public class ContentCacheUsedMediaProvider : UsedMediaProvider {
         string? value = property.GetSourceValue()?.ToString();
         if (string.IsNullOrWhiteSpace(value)) return;
 
-        // TODO: do something else for block lists
+        if (property.PropertyType.EditorAlias is "Umbraco.BlockList" or "Limbo.Umbraco.BlockList") {
+            if (JsonUtils.TryParseJsonObject(value, out JObject? json)) {
+                try {
+                    UnusedMediaBlockListModel blockList = UnusedMediaBlockListUtils.ParseBlockList(json);
+                    AppendMediaKeys(blockList, property, owner, keys);
+                } catch (Exception ex) {
+                    // TODO: log this instead
+                    throw new Exception($"Failed parsing block list model for property '{property.Alias}' on page with ID '{owner.Id}'.", ex);
+                }
+            }
+        }
 
         foreach (Match match in _mediaUdiRegex.Matches(value)) {
             if (Guid.TryParse(match.Groups[2].Value, out Guid mediaKey)) keys.Add(mediaKey);
@@ -84,6 +97,16 @@ public class ContentCacheUsedMediaProvider : UsedMediaProvider {
             if (Guid.TryParse(match.Groups[1].Value, out Guid mediaKey)) keys.Add(mediaKey);
         }
 
+    }
+
+    public virtual void AppendMediaKeys(UnusedMediaBlockListModel blockList, IPublishedProperty property, IPublishedContent owner, HashSet<Guid> keys) {
+        foreach (var item in blockList.Blocks) {
+            AppendMediaKeys(item, property, owner, keys);
+        }
+    }
+
+    public virtual void AppendMediaKeys(UnusedMediaBlockListItem item, IPublishedProperty property, IPublishedContent owner, HashSet<Guid> keys) {
+        // we don't do anything by default
     }
 
     public bool IsMediaUsed(Guid key) {
