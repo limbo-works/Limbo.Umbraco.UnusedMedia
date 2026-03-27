@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Limbo.Umbraco.UnusedMedia.Helpers;
+﻿using Limbo.Umbraco.UnusedMedia.Helpers;
 using Umbraco.Cms.Core.Events;
-using Umbraco.Cms.Core.Media.EmbedProviders;
 using Umbraco.Cms.Core.Notifications;
 
 namespace Limbo.Umbraco.UnusedMedia.Notifications.Handlers;

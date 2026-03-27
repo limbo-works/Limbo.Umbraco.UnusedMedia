@@ -49,6 +49,16 @@ public class UnusedMediaOptions {
     public HashSet<int> IgnoredFolderIds { get; set; } = [];
 
     /// <summary>
+    /// Gets whether any ignored folder IDs have been specified.
+    /// </summary>
+    public bool HasIgnoredFolderIds => IgnoredFolderIds is { Count: > 0 };
+
+    /// <summary>
+    /// Gets whether ignored media should be included in the results. If <see langword="true"/>, media that are in a path containing any of the IDs specified in <see cref="IgnoredFolderIds"/> will be included in the results; if <see langword="false"/>, such media will be excluded. Default is <see langword="false"/>.
+    /// </summary>
+    public bool IncludeIgnored { get; set; }
+
+    /// <summary>
     /// Gets or sets the maximum amount of results to be returned.
     /// </summary>
     public int Limit { get; set; } = 15;

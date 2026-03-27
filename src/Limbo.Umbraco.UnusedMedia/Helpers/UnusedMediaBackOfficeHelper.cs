@@ -81,7 +81,7 @@ public class UnusedMediaBackOfficeHelper {
         return new Dictionary<string, object> {
             {"cacheBuster", GetCacheBuster()},
             {"version", UnusedMediaPackage.InformationalVersion},
-            {"dashboardElementName", _dependencies.Settings.DashboardElementName}
+            {"dashboardElementName", _dependencies.Settings.Dashboard.ElementName}
         };
 
     }
@@ -247,8 +247,15 @@ public class UnusedMediaBackOfficeHelper {
             return false;
         }
 
+        int[] path = media.Path.ToInt32Array();
+
+        // Ignore media if a part of their path is ignored
+        if (!options.IncludeIgnored && path.Any(x => options.IgnoredFolderIds.Contains(x))) {
+            return false;
+        }
+
         // Ignore media not within "Path" if the filter is specified
-        if (options.HasPath && !media.Path.ToInt32Array().Any(options.IsInPath)) {
+        if (options.HasPath && !path.Any(options.IsInPath)) {
             return false;
         }
 

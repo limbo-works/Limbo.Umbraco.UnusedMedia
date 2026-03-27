@@ -20,11 +20,11 @@ public class UnusedMediaDashboard : IDashboard {
 
     public IAccessRule[] AccessRules {
         get {
-            if (_settings.AdminGroups.Count == 0) return [];
+            if (_settings.Dashboard.AllowedGroups.Count == 0) return [];
             return [
                 new AccessRule {
                     Type = AccessRuleType.Grant,
-                    Value = string.Join(",", _settings.AdminGroups)
+                    Value = string.Join(",", _settings.Dashboard.AllowedGroups)
                 }
             ];
         }

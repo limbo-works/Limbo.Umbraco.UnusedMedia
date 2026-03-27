@@ -1,12 +1,18 @@
 namespace Limbo.Umbraco.UnusedMedia.Models;
 
+/// <summary>
+/// Class representing the settings for the unused media detection in Umbraco. This class can be used to configure various aspects of the unused media detection, such as dashboard settings and folders to ignore during scanning.
+/// </summary>
 public class UnusedMediaSettings {
 
-    public List<string> AdminGroups { get; set; } = [];
+    /// <summary>
+    /// Gets or sets settings specified to the dashboard.
+    /// </summary>
+    public UnusedMediaDashboardSettings Dashboard { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets the name of the dashboard element. Change this if you want to use your own dashboard element instead of the default one provided by this package - e.g. if your goal is to replace or customize the default dashboard.
+    /// Gets or sets a list of folder IDs that should be ignored when scanning for unused media. If a media item has one of these IDs in its path, it will be excluded from the list of unused media.
     /// </summary>
-    public string DashboardElementName { get; set; } = "limbo-unused-media-dashboard";
+    public HashSet<int> IgnoredFolderIds { get; set; } = [];
 
 }
