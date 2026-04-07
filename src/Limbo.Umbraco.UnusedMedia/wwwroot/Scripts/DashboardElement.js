@@ -37,13 +37,13 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
             margin-bottom: 250px;
             position: relative;
 
-            uui-loader-circle {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-            }
+        }
 
+        uui-loader-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .container.loading .stack {
@@ -72,6 +72,7 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
             white-space: nowrap;
             padding-top: 3px;
             padding-bottom: 2px;
+            font-size: 14px;
             button {
                 border: 0;
                 background: transparent;
@@ -79,7 +80,10 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
                 font-weight: bold;
                 cursor: pointer;
                 font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
-                font-size: 15px;
+                font-size: 14px;
+                &:hover {
+                    text-decoration: underline;
+                }
             }
             small {
                 font-size: 11px;
@@ -87,8 +91,10 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
         }
 
         uui-table-cell {
-            padding-top: 8px;
+            padding-top: 10px;
             padding-bottom: 5px;
+            vertical-align: top;
+            font-size: 14px;
         }
 
         uui-table-cell.fw {
@@ -184,6 +190,46 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
         .muted {
             color: #999;
             font-style: italic;
+        }
+
+
+        .filters {
+            height: 53px;
+            align-items: end;
+        }
+
+        .table-actions {
+            position: absolute;
+            left: 0; top: 0; right: 0;
+            background-color: #3544b1;
+            border-color: #3544b1;
+            border-radius: 3px;
+            padding: 10px;
+            color: #fff;
+            display: flex;
+            .left, right {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+            .right {
+                margin-left: auto;
+            }
+        }
+
+        .user-name, .member-name {
+            width: fit-content;
+            max-width: 200px;
+        }
+
+        @media (min-width : 1850px) {
+            .user-name {
+                max-width: 350px;
+            }
+        }
+
+        uui-checkbox {
+            width: 18px;
         }
 
     `;
@@ -291,6 +337,8 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
 
         UnusedMediaService.getUnusedMedia(config).then(res => {
 
+            this.allSelected = false;
+
             self.reports = res.data.reports;
 
             self.columns = res.data.columns;
@@ -303,7 +351,9 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
                 item.cells.forEach(function (cell) {
                     cell.column = self.columns[cell.alias];
                     if (cell.column) cell.type = cell.column.type;
-                    cell.classes = cell.type === "name" ? "fw" : "nw";
+                    if (!(cell.type === "user" || cell.type === "member" || cell.type === "memberPicker")) {
+                        cell.classes = cell.type === "name" ? "" : "nw";
+                    }
                 });
             });
 
@@ -350,7 +400,6 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
             clearTimeout(this.timeout);
             this.timeout = setTimeout(() => this.updateList(), 250);
         } else if (filter.type === "dropdown") {
-            console.log(filter);
             filter.items.forEach(function (o) {
                 o.selected = o.value === filter.value;
                 o.checked = o.value === filter.value;
@@ -365,13 +414,14 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
         const self = this;
         media.trashMediaButtonState = "waiting";
         self.requestUpdate();
-        UnusedMediaService.trashMedia(media).then(function (response) {
-            self.notificationsService.success("Ikke-brugte medier 1", "Det valgte medie er nu blevet flyttet til papirkurven.");
+        const multi = Array.isArray(media) && media.length > 1;
+        return UnusedMediaService.trashMedia(media).then(function (response) {
+            self.notificationsService.success("Ikke-brugte medier", multi ? "De valgte medier er nu blevet flyttet til papirkurven." : "Det valgte medie er nu blevet flyttet til papirkurven.");
             self.updateList();
             media.trashMediaButtonState = "success";
             self.requestUpdate();
         }, function (error) {
-            self.notificationsService.error("Ikke-brugte medier 2", "Der skete en fejl i forbindelse med sletningen af mediet.");
+            self.notificationsService.error("Ikke-brugte medier", multi ? "Der opstod en fejl i forbindelse med sletningen af de valgte medier." : "Der skete en fejl i forbindelse med sletningen af mediet.");
             media.trashMediaButtonState = "failed";
             self.requestUpdate();
         });
@@ -383,21 +433,47 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
 
         // TODO: introduce a setting whether we should delete or trash?
 
+        const multi = Array.isArray(media) && media.length > 1;
+
+        let title;
+        let content;
+        if (Array.isArray(media)) {
+            if (media.length > 1) {
+                title = "Slet medier";
+                content = "Er du sikker på, at du vil flytte de valgte medier til papirkurven?";
+            } else {
+                title = "Slet medie";
+                content = "Er du sikker på, at du vil flytte mediet \"" + media[0].name + "\" til papirkurven?";
+            }
+        } else {
+            title = "Slet medie";
+            content = "Er du sikker på, at du vil flytte mediet \"" + media.name + "\" til papirkurven?";
+        }
+
         self.overlayService.confirm({
-            title: "Slet medie",
-            content: "Er du sikker på, at du vil slette mediet \"" + media.name + "\"?",
+            title,
+            content,
             submitButtonLabel: "Slet",
             closeButtonLabel: "Annuller",
             submitButtonStyle: "danger",
-            submit: function () {
-                self.trashMedia(media);
-                self.overlayService.close();
+            submit: function (model) {
+                model.submitButtonState = "busy";
+                self.trashMedia(media).then(function () {
+                    self.overlayService.close();
+                });
             },
             close: function () {
                 self.overlayService.close();
             }
         });
 
+    }
+
+    requestDeleteSelected() {
+        const self = this;
+        const selected = this.items.filter(x => x.selected);
+        if (selected.length === 0) return;
+        this.requestDelete(selected);
     }
 
     toggleReports() {
@@ -444,6 +520,20 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
         }
 
     }
+
+    toggleAll(e) {
+        this.allSelected = e.target.checked;
+        this.items.forEach(item => { item.selected = this.allSelected; });
+        this.selectedCount = this.items.filter(i => i.selected).length;
+        this.requestUpdate();
+    }
+
+    toggleItem(e, item) {
+        item.selected = e.target.checked;
+        this.selectedCount = this.items.filter(i => i.selected).length;
+        this.allSelected = this.items.every(i => i.selected);
+        this.requestUpdate();
+    };
 
     renderStats() {
 
@@ -501,7 +591,7 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
                                 ${formatDate(report.createDate, this.dateOptions)}
                             </uui-table-cell>
                             <uui-table-cell role="cell" class="nw">
-                                <uui-button look="secondary" compact="true" state="${report.buttonState}" @click=${() => this.startScan(report)}>Scan igen</uui-button>
+                                <uui-button look="secondary" compact="true" state="${report.buttonState}" @click=${() => this.startScan(report)} label="Scan igen"></uui-button>
                             </uui-table-cell>
                         </uui-table-row>
                     `)}
@@ -538,6 +628,7 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
                 return html`
                     <uui-input
                         value="${filter.value}"
+                        label="${filter.placeholder}"
                         placeholder="${filter.placeholder}"
                         @input="${(e) => this.onFilterChange(e, filter)}"></uui-input>
                 `;
@@ -545,9 +636,17 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
             case "dropdown":
                 return html`
                     <uui-select
+                        label="${filter.placeholder}"
                         placeholder="${filter.placeholder}"
                         .options=${filter.items}
                         @change="${(e) => this.onFilterChange(e, filter)}"></uui-select>
+                `;
+
+            case "memberPicker":
+                return html`
+                    <div>
+
+                    </div>
                 `;
 
 
@@ -580,16 +679,36 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
 
         return html`
             <uui-table role="table">
+                <uui-table-column style="width: 1px;"></uui-table-column>
+                ${repeat(this.columns, (column) => html`
+                    <uui-table-column></uui-table-column>
+                `)}
+                <uui-table-column style="width: 1px;"></uui-table-column>
                 <uui-table-head role="row">
+                    <uui-table-head-cell role="columnheader">
+                        <uui-checkbox .checked=${this.allSelected} @change=${(e) => this.toggleAll(e)}></uui-checkbox>
+                    </uui-table-head-cell>
                     ${repeat(this.columns, (column) => this.renderColumn(column))}
                 </uui-table-head>
                 ${repeat(this.items, (item) => html`
                     <uui-table-row role="row">
+                        <uui-table-cell role="cell">
+                            <uui-checkbox .checked=${item.selected} @change=${(e) => this.toggleItem(e, item)}></uui-checkbox>
+                        </uui-table-cell>
                         ${repeat(item.cells, (cell, index) => this.renderCell(cell, index, item))}
                         <uui-table-cell role="cell">
-                            <uui-button look="primary" color="danger" state="${item.trashMediaButtonState}" @disabled=${item.trashMediaButtonState === "waiting"} @click="${() => this.requestDelete(item)}">
-                                ${this.localize.term("unusedMediaDashboard_delete")}
-                            </uui-button>
+                            <uui-action-bar>
+                                <uui-button
+                                    look="secondary"
+                                    color="invalid"
+                                    state="${item.trashMediaButtonState}"
+                                    label="Delete media"
+                                    @disabled=${item.trashMediaButtonState === "waiting"}
+                                    @click="${() => this.requestDelete(item)}"
+                                >
+                                    <uui-icon name="delete"></uui-icon>
+                                </uui-button>
+                            </uui-action-bar>
                         </uui-table-cell>
                     </uui-table-row>
                 `)}
@@ -638,7 +757,7 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
             return html`
                 <uui-table-cell role="cell" class="${cell.classes}">
                     ${when(cell.value, () => html`
-                        ${cell.text || cell.value}
+                        <div class="${cell.type}-name">${cell.text || cell.value}</div>
                     `, () => html`
                         <span class="muted">N/A</span>
                     `)}
@@ -714,17 +833,44 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
 
     }
 
+    renderTableActions() {
+
+        if (!this.items) return;
+        if (this.items.length === 0) return;
+        if (!this.items.some(x => x.selected)) return;
+
+        return html`
+            <div class="table-actions">
+                <div class="left">
+                    <uui-button look="secondary" @click="${(e) => this.clearSelection(e)}" label="${this.localize.term("buttons_clearSelection")}"></uui-button>
+                    <strong>
+                        ${this.selectedCount} af ${this.items.length} valgt
+                    </strong>
+                </div>
+                <div class="right">
+                    <uui-button look="primary" color="danger" @click="${(e) => this.requestDeleteSelected(e)}" label="${this.localize.term("actions_delete")}"></uui-button>
+                </div>
+            </div>
+        `;
+
+    }
+
     render() {
         return html`
-            <h1>${this.dashboard.title}</h1>
-            <p>${this.dashboard.description}</p>
-            <div class="container ${this.loading ? "loading" : ""}">
-                <div class="stack">
-                    ${this.renderFilters()}
-                    ${this.renderStats()}
-                    ${this.renderReports()}
-                    ${this.renderItems()}
-                    ${this.renderPagination()}
+            <div>
+                <h1>${this.dashboard.title}</h1>
+                <p>${this.dashboard.description}</p>
+                <div class="container ${this.loading ? "loading" : ""}">
+                    <div class="stack">
+                        <div style="position: relative; height: 53px;">
+                            ${this.renderFilters()}
+                            ${this.renderTableActions()}
+                        </div>
+                        ${this.renderStats()}
+                        ${this.renderReports()}
+                        ${this.renderItems()}
+                        ${this.renderPagination()}
+                    </div>
                 </div>
                 ${when(this.loading, () => html`<uui-loader-circle></uui-loader-circle>`)}
             </div>

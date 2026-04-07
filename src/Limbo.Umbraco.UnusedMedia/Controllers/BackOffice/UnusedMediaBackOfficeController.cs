@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Limbo.Umbraco.UnusedMedia.Helpers;
 using Limbo.Umbraco.UnusedMedia.Models.Reports;
@@ -87,7 +88,7 @@ public class UnusedMediaBackOfficeController : UmbracoAuthorizedApiController {
         if (string.IsNullOrWhiteSpace(provider)) return BadRequest("No provider specified.");
 
         UsedMediaProvider? p = _unusedMediaService.GetUsedMediaProvider(provider);
-        if (p is null) return NotFound("Provider nt found.");
+        if (p is null) return NotFound("Provider not found.");
 
         var report = _unusedMediaService.BuildUsedMediaReport(p);
 
@@ -101,21 +102,62 @@ public class UnusedMediaBackOfficeController : UmbracoAuthorizedApiController {
         // Ensure that we have a current user - if not, return unauthorized
         if (_backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser is not { } user) return Unauthorized();
 
-        // Get the key of the media item to delete
-        Guid mediaKey = body.GetGuid("mediaKey");
+        if (body.TryGetGuid("mediaKey", out Guid mediaKey)) {
 
-        // Get a reference to the media item - if it doesn't exist, return not found
-        IMedia? media = _unusedMediaService.GetMedia(mediaKey);
-        if (media == null) return NotFound();
+            // Get a reference to the media item - if it doesn't exist, return not found
+            IMedia? media = _unusedMediaService.GetMedia(mediaKey);
+            if (media == null) return NotFound();
 
-        // And wo trash the media
-        try {
-            _unusedMediaService.TrashMedia(media, user);
-            return Ok();
-        } catch {
-            // The service already logs the exception, so we just return a generic error message here
-            return NewtonsoftJsonResult.InternalError($"Failed trashing media with ID '{media.Key}'.");
+            // And wo trash the media
+            try {
+                _unusedMediaService.TrashMedia(media, user);
+                return Ok();
+            } catch {
+                // The service already logs the exception, so we just return a generic error message here
+                return NewtonsoftJsonResult.InternalError($"Failed trashing media with ID '{media.Key}'.");
+            }
+
         }
+
+        if (body.TryGetGuidArray("mediaKeys", out Guid[]? mediaKeys)) {
+
+            foreach (Guid key in mediaKeys) {
+
+                // Get a reference to the media item - if it doesn't exist, skip it
+                IMedia? media = _unusedMediaService.GetMedia(key);
+                if (media == null) continue;
+
+                try {
+                    _unusedMediaService.TrashMedia(media, user);
+                } catch {
+                    // The service already logs the exception, so we just return a generic error message here
+                    return NewtonsoftJsonResult.InternalError($"Failed trashing media with ID '{media.Key}'.");
+                }
+
+            }
+
+            return Ok();
+
+        }
+
+        return BadRequest("No media keys specified.");
+
+    }
+
+}
+
+static class HelloExtensions {
+
+    public static bool TryGetGuidArray(this JObject json, string propertyName, [NotNullWhen(true)] out Guid[]? guids) {
+
+        guids = null;
+
+       if (json.TryGetValue(propertyName, out JToken? token) && token is JArray array) {
+           guids = array.Select(x => x.ToObject<Guid>()).ToArray();
+           return true;
+       }
+
+       return false;
 
     }
 

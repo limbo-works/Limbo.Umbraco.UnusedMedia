@@ -15,9 +15,6 @@ public class UnusedMediaManifest : IManifestFilter {
             Scripts = [
                 "/umbraco/backoffice/api/UnusedMediaBackOffice/importmap.js",
                 $"/App_Plugins/{UnusedMediaPackage.Alias}/Scripts/DashboardController.js?v={cacheBuster}"
-            ],
-            Stylesheets = [
-                $"/App_Plugins/{UnusedMediaPackage.Alias}/Styles/Default.css"
             ]
         });
     }

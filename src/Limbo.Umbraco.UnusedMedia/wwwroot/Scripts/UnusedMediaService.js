@@ -58,8 +58,13 @@ export class UnusedMediaService {
     }
 
     static async trashMedia(media) {
-        const key = typeof media === "object" ? media.key : media;
-        return await postJson("/umbraco/backoffice/api/UnusedMediaBackOffice/TrashMedia", { mediaKey: key });
+        if (Array.isArray(media)) {
+            const keys = media.map(m => typeof m === "object" ? m.key : m);
+            return await postJson("/umbraco/backoffice/api/UnusedMediaBackOffice/TrashMedia", { mediaKeys: keys });
+        } else {
+            const key = typeof media === "object" ? media.key : media;
+            return await postJson("/umbraco/backoffice/api/UnusedMediaBackOffice/TrashMedia", { mediaKey: key });
+        }
     }
 
     static async startScan(provider) {
