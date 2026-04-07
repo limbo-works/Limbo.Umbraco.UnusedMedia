@@ -232,6 +232,10 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
             width: 18px;
         }
 
+        uui-loader-circle {
+            color: var(--unused-media-loader-color);
+        }
+
     `;
 
     constructor() {
