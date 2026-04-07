@@ -35,12 +35,6 @@ public class UnusedMediaBackOfficeHelper {
     private readonly UnusedMediaService _unusedMediaService;
     private readonly IExamineManager _examineManager;
 
-    #region Properties
-
-    public int DefaultListLimit { get; protected set; }
-
-    #endregion
-
     #region Constructors
 
     public UnusedMediaBackOfficeHelper(UnusedMediaBackOfficeHelperDependencies dependencies) {
@@ -51,9 +45,6 @@ public class UnusedMediaBackOfficeHelper {
         _umbracoContextAccessor = dependencies.UmbracoContextAccessor;
         _unusedMediaService = dependencies.UnusedMediaService;
         _examineManager = dependencies.ExamineManager;
-
-        DefaultListLimit = 15;
-
     }
 
     #endregion
@@ -100,7 +91,7 @@ public class UnusedMediaBackOfficeHelper {
     public virtual UnusedMediaOptions CreateOptions(HttpRequest request, IUser currentUser) {
 
         int limit = request.Query.GetInt32("limit");
-        if (limit <= 0) limit = DefaultListLimit;
+        if (limit <= 0) limit = _dependencies.Settings.Dashboard.PerPage;
 
         int page = Math.Max(request.Query.GetInt32("page"), 1);
 

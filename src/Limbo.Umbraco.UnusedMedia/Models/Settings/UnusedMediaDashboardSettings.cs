@@ -15,4 +15,9 @@ public class UnusedMediaDashboardSettings {
     /// </summary>
     public string ElementName { get; set; } = "limbo-unused-media-dashboard";
 
+    /// <summary>
+    /// Gets or sets the amount of media to show on each page. Default is <c>15</c>.
+    /// </summary>
+    public int PerPage { get; set; } = 15;
+
 }
