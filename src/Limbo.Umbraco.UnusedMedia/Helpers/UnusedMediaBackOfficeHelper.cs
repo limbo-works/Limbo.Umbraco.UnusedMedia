@@ -107,12 +107,13 @@ public class UnusedMediaBackOfficeHelper {
         string writer = Localize("writer");
         string size = Localize("size");
 
-        List<UnusedMediaColumn> columns = [];
-        columns.Add(new UnusedMediaColumn("name", name, UnusedMediaColumnType.Name, allowSort: true, defaultOrder: SortOrder.Ascending));
-        columns.Add(new UnusedMediaColumn("updateDate", updateDate, UnusedMediaColumnType.DateTime, allowSort: true, defaultOrder: SortOrder.Descending));
-        columns.Add(new UnusedMediaColumn("creatorId", creator, UnusedMediaColumnType.User));
-        columns.Add(new UnusedMediaColumn("writerId", writer, UnusedMediaColumnType.User));
-        columns.Add(new UnusedMediaColumn("size", size, UnusedMediaColumnType.Bytes, allowSort: true, defaultOrder: SortOrder.Descending));
+        List<UnusedMediaColumn> columns = [
+            new("name", name, UnusedMediaColumnType.Name, allowSort: true, defaultOrder: SortOrder.Ascending),
+            new("updateDate", updateDate, UnusedMediaColumnType.DateTime, allowSort: true, defaultOrder: SortOrder.Descending),
+            new("creatorId", creator, UnusedMediaColumnType.User),
+            new("writerId", writer, UnusedMediaColumnType.User),
+            new("size", size, UnusedMediaColumnType.Bytes, allowSort: true, defaultOrder: SortOrder.Descending)
+        ];
 
         return new UnusedMediaOptions {
             Text = request.Query["text"],
