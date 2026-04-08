@@ -2,6 +2,7 @@
 using Limbo.Forms.Models.Fields;
 using Limbo.Umbraco.UnusedMedia.Models;
 using Limbo.Umbraco.UnusedMedia.Models.Reports;
+using Limbo.Umbraco.UnusedMedia.Models.Settings;
 using Limbo.Umbraco.UnusedMedia.Models.Sites;
 using Limbo.Umbraco.UnusedMedia.Services;
 using Microsoft.AspNetCore.Http;
@@ -35,11 +36,16 @@ public class UnusedMediaBackOfficeHelper {
     private readonly UnusedMediaService _unusedMediaService;
     private readonly IExamineManager _examineManager;
 
+    #region Properties
+
+    public UnusedMediaSettings Settings => _dependencies.Settings;
+
+    #endregion
+
     #region Constructors
 
     public UnusedMediaBackOfficeHelper(UnusedMediaBackOfficeHelperDependencies dependencies) {
         _dependencies = dependencies;
-
         _userService = dependencies.UserService;
         _localizedTextService = dependencies.LocalizedTextService;
         _umbracoContextAccessor = dependencies.UmbracoContextAccessor;
@@ -91,7 +97,7 @@ public class UnusedMediaBackOfficeHelper {
     public virtual UnusedMediaOptions CreateOptions(HttpRequest request, IUser currentUser) {
 
         int limit = request.Query.GetInt32("limit");
-        if (limit <= 0) limit = _dependencies.Settings.Dashboard.PerPage;
+        if (limit <= 0) limit = Settings.Dashboard.PerPage;
 
         int page = Math.Max(request.Query.GetInt32("page"), 1);
 
@@ -118,7 +124,8 @@ public class UnusedMediaBackOfficeHelper {
             Page = page,
             SortField = request.Query.GetString("sortField"),
             SortOrder = request.Query.GetString("sortOrder") is "desc" or "descending" ? SortOrder.Descending : SortOrder.Ascending,
-            Columns = columns
+            Columns = columns,
+            IgnoredFolderIds = Settings.IgnoredFolderIds
         };
 
     }
