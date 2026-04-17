@@ -10,7 +10,7 @@ public class UnusedMediaPackage {
     /// <summary>
     /// Gets the friendly name of the package.
     /// </summary>
-    public const string Name = "Limbo UnusedMedia";
+    public const string Name = "Limbo Unused Media";
 
     /// <summary>
     /// Gets the version of the package.

@@ -10,7 +10,7 @@ public class UnusedMediaManifest : IManifestFilter {
             PackageId = UnusedMediaPackage.Alias,
             PackageName = UnusedMediaPackage.Name,
             Version = UnusedMediaPackage.InformationalVersion,
-            BundleOptions = BundleOptions.Independent,
+            BundleOptions = BundleOptions.None,
             Scripts = [
                 "/umbraco/backoffice/api/UnusedMediaBackOffice/importmap.js",
                 $"/App_Plugins/{UnusedMediaPackage.Alias}/Scripts/DashboardController.js"
