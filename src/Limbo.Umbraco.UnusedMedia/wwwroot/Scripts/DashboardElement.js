@@ -525,6 +525,13 @@ export class LimboUnusedMediaDashboardElement extends LitElement {
 
     }
 
+    clearSelection(e) {
+        this.allSelected = false;
+        this.items.forEach(item => { item.selected = false; });
+        this.selectedCount = this.items.filter(i => i.selected).length;
+        this.requestUpdate();
+    }
+
     toggleAll(e) {
         this.allSelected = e.target.checked;
         this.items.forEach(item => { item.selected = this.allSelected; });
