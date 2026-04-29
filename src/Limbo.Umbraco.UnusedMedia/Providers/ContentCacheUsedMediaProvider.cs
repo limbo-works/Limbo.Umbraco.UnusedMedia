@@ -86,8 +86,8 @@ public class ContentCacheUsedMediaProvider : UsedMediaProvider {
                     UnusedMediaBlockListModel blockList = _blockListParser.ParseBlockList(json);
                     AppendMediaKeys(blockList, property, owner, keys);
                 } catch (Exception ex) {
-                    // TODO: log this instead
-                    throw new Exception($"Failed parsing block list model for property '{property.Alias}' on page with ID '{owner.Id}'.", ex);
+                    // TODO: add as warning to the report instead of logging an error
+                    _logger.LogError(ex, "Failed parsing block list model for property {PropertyAlias} on page with ID {PageId}.", property.Alias, owner.Id);
                 }
             }
         }
