@@ -14,8 +14,11 @@ public class UnusedMediaBlockListParser {
         IReadOnlyList<UnusedMediaBlockListContentData> contentData = json.GetRequiredArray("contentData", ParseBlockListContentData);
         IReadOnlyList<UnusedMediaBlockListContentData> settingsData = json.GetRequiredArray("settingsData", ParseBlockListContentData);
 
-        var contentDataLookup = contentData.ToDictionary(x => x.Udi);
-        var settingsDataLookup = settingsData.ToDictionary(x => x.Udi);
+        Dictionary<string, UnusedMediaBlockListContentData> contentDataLookup = [];
+        foreach (UnusedMediaBlockListContentData content in contentData) contentDataLookup.TryAdd(content.Udi, content);
+
+        Dictionary<string, UnusedMediaBlockListContentData> settingsDataLookup = [];
+        foreach (UnusedMediaBlockListContentData settings in settingsData) settingsDataLookup.TryAdd(settings.Udi, settings);
 
         List<UnusedMediaBlockListItem> blocks = [];
 
