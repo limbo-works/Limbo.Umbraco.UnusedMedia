@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Limbo.Umbraco.UnusedMedia.BlockList;
 using Limbo.Umbraco.UnusedMedia.Models.BlockList;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -18,13 +19,15 @@ public class ContentCacheUsedMediaProvider : UsedMediaProvider {
 
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<ContentCacheUsedMediaProvider> _logger;
+    private readonly UnusedMediaBlockListParser _blockListParser;
 
     private HashSet<Guid>? _usedMediaKeys;
     private HashSet<string>? _usedMediaUdis;
 
-    public ContentCacheUsedMediaProvider(IServiceScopeFactory serviceScopeFactory, ILogger<ContentCacheUsedMediaProvider> logger) {
+    public ContentCacheUsedMediaProvider(IServiceScopeFactory serviceScopeFactory, ILogger<ContentCacheUsedMediaProvider> logger, UnusedMediaBlockListParser blockListParser) {
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
+        _blockListParser = blockListParser;
     }
 
     /// <summary>
@@ -80,7 +83,7 @@ public class ContentCacheUsedMediaProvider : UsedMediaProvider {
         if (property.PropertyType.EditorAlias is "Umbraco.BlockList" or "Limbo.Umbraco.BlockList") {
             if (JsonUtils.TryParseJsonObject(value, out JObject? json)) {
                 try {
-                    UnusedMediaBlockListModel blockList = UnusedMediaBlockListUtils.ParseBlockList(json);
+                    UnusedMediaBlockListModel blockList = _blockListParser.ParseBlockList(json);
                     AppendMediaKeys(blockList, property, owner, keys);
                 } catch (Exception ex) {
                     // TODO: log this instead

@@ -28,10 +28,11 @@ public class UnusedMediaComposer : IComposer {
         IConfigurationSection section = builder.Config.GetSection("Limbo:UnusedMedia");
         if (section.Exists()) builder.Services.Configure<UnusedMediaSettings>(section);
 
-        // Register UnusedMediaService and scheduling services
+        // Register misc dependencies
         builder.Services.AddSingleton<UnusedMediaService>();
         builder.Services.AddSingleton<UnusedMediaServiceDependencies>();
         builder.Services.AddSingleton<UnusedMediaBackOfficeHelper>();
+        builder.Services.AddSingleton<UnusedMediaBackOfficeHelperDependencies>();
         builder.Services.AddSingleton<UnusedMediaBackOfficeHelperDependencies>();
 
         builder.Dashboards().Add<UnusedMediaDashboard>();
