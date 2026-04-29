@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using Skybrud.Essentials.Collections.Extensions;
 using Skybrud.Essentials.Json.Newtonsoft;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
 
@@ -24,10 +25,17 @@ public class ContentCacheUsedMediaProvider : UsedMediaProvider {
     private HashSet<Guid>? _usedMediaKeys;
     private HashSet<string>? _usedMediaUdis;
 
+    [Obsolete("Use constructor overload instead.")]
     public ContentCacheUsedMediaProvider(IServiceScopeFactory serviceScopeFactory, ILogger<ContentCacheUsedMediaProvider> logger, UnusedMediaBlockListParser blockListParser) {
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
         _blockListParser = blockListParser;
+    }
+
+    public ContentCacheUsedMediaProvider(IServiceScopeFactory serviceScopeFactory, ILogger<ContentCacheUsedMediaProvider> logger) {
+        _serviceScopeFactory = serviceScopeFactory;
+        _logger = logger;
+        _blockListParser = StaticServiceProvider.Instance.GetRequiredService<UnusedMediaBlockListParser>();
     }
 
     /// <summary>
