@@ -1,3 +1,4 @@
+using Limbo.Umbraco.UnusedMedia.BlockList;
 using Limbo.Umbraco.UnusedMedia.Dashboards;
 using Limbo.Umbraco.UnusedMedia.Helpers;
 using Limbo.Umbraco.UnusedMedia.Manifests;
@@ -33,7 +34,7 @@ public class UnusedMediaComposer : IComposer {
         builder.Services.AddSingleton<UnusedMediaServiceDependencies>();
         builder.Services.AddSingleton<UnusedMediaBackOfficeHelper>();
         builder.Services.AddSingleton<UnusedMediaBackOfficeHelperDependencies>();
-        builder.Services.AddSingleton<UnusedMediaBackOfficeHelperDependencies>();
+        builder.Services.AddSingleton<UnusedMediaBlockListParser>();
 
         builder.Dashboards().Add<UnusedMediaDashboard>();
         builder.ManifestFilters().Append<UnusedMediaManifest>();
