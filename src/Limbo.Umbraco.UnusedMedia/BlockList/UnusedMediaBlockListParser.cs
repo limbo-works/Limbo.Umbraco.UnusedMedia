@@ -1,31 +1,51 @@
-﻿using Limbo.Umbraco.UnusedMedia.Models.BlockList;
-using Newtonsoft.Json.Linq;
-using Skybrud.Essentials.Exceptions;
-using Skybrud.Essentials.Json.Newtonsoft.Extensions;
+// [CHANGE: Umbraco 17 upgrade - System.Text.Json + Umbraco 14 block list format] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
+
+using System.Text.Json.Nodes;
+using Limbo.Umbraco.UnusedMedia.Json;
+using Limbo.Umbraco.UnusedMedia.Models.BlockList;
 
 namespace Limbo.Umbraco.UnusedMedia.BlockList;
 
+/// <summary>
+/// Parser for the raw JSON value of a block list property.
+///
+/// The format changed in Umbraco 14: layout items reference <c>contentKey</c>/<c>settingsKey</c> instead of
+/// <c>contentUdi</c>/<c>settingsUdi</c>, entries in <c>contentData</c>/<c>settingsData</c> are identified by
+/// <c>key</c> instead of <c>udi</c>, and their property values live in a <c>values</c> array instead of being
+/// flattened onto the entry. Nested block values are now nested JSON objects rather than JSON encoded strings.
+/// </summary>
 public class UnusedMediaBlockListParser {
 
-    public virtual UnusedMediaBlockListModel ParseBlockList(JObject json) {
+    /// <summary>
+    /// Parses the specified block list <paramref name="json"/>.
+    /// </summary>
+    /// <param name="json">The raw JSON value of the block list property.</param>
+    /// <returns>An instance of <see cref="UnusedMediaBlockListModel"/>.</returns>
+    public virtual UnusedMediaBlockListModel ParseBlockList(JsonObject json) {
 
-        UnusedMediaBlockListLayout layout = json.GetRequiredObject("layout", ParseBlockListLayout);
+        JsonObject layoutJson = json["layout"] as JsonObject ?? throw new JsonParseException("Block list value doesn't have a 'layout' object.");
 
-        IReadOnlyList<UnusedMediaBlockListContentData> contentData = json.GetRequiredArray("contentData", ParseBlockListContentData);
-        IReadOnlyList<UnusedMediaBlockListContentData> settingsData = json.GetRequiredArray("settingsData", ParseBlockListContentData);
+        UnusedMediaBlockListLayout layout = ParseBlockListLayout(layoutJson);
 
-        Dictionary<string, UnusedMediaBlockListContentData> contentDataLookup = [];
-        foreach (UnusedMediaBlockListContentData content in contentData) contentDataLookup.TryAdd(content.Udi, content);
+        IReadOnlyList<UnusedMediaBlockListContentData> contentData = json.GetArrayItems("contentData", ParseBlockListContentData);
+        IReadOnlyList<UnusedMediaBlockListContentData> settingsData = json.GetArrayItems("settingsData", ParseBlockListContentData);
 
-        Dictionary<string, UnusedMediaBlockListContentData> settingsDataLookup = [];
-        foreach (UnusedMediaBlockListContentData settings in settingsData) settingsDataLookup.TryAdd(settings.Udi, settings);
+        Dictionary<Guid, UnusedMediaBlockListContentData> contentDataLookup = [];
+        foreach (UnusedMediaBlockListContentData content in contentData) contentDataLookup.TryAdd(content.Key, content);
+
+        Dictionary<Guid, UnusedMediaBlockListContentData> settingsDataLookup = [];
+        foreach (UnusedMediaBlockListContentData settings in settingsData) settingsDataLookup.TryAdd(settings.Key, settings);
 
         List<UnusedMediaBlockListItem> blocks = [];
 
         foreach (UnusedMediaBlockListLayoutItem item in layout.Items) {
 
-            if (!contentDataLookup.TryGetValue(item.ContentUdi, out var content)) throw new WtfException();
-            settingsDataLookup.TryGetValue(item.SettingsUdi ?? "", out var settings);
+            // A layout item referencing content that isn't in "contentData" means the value is corrupt. Skip the
+            // block rather than failing the entire scan - a single bad property shouldn't hide every unused media.
+            if (!contentDataLookup.TryGetValue(item.ContentKey, out UnusedMediaBlockListContentData? content)) continue;
+
+            UnusedMediaBlockListContentData? settings = null;
+            if (item.SettingsKey is { } settingsKey) settingsDataLookup.TryGetValue(settingsKey, out settings);
 
             blocks.Add(new UnusedMediaBlockListItem(item, content, settings));
 
@@ -35,35 +55,56 @@ public class UnusedMediaBlockListParser {
 
     }
 
-    public virtual UnusedMediaBlockListLayout ParseBlockListLayout(JObject json) {
-        UnusedMediaBlockListLayoutItem[] items = json.GetRequiredArray("Umbraco.BlockList", ParseBlockListLayoutItem);
+    /// <summary>
+    /// Parses the <c>layout</c> object of a block list value.
+    /// </summary>
+    public virtual UnusedMediaBlockListLayout ParseBlockListLayout(JsonObject json) {
+        IReadOnlyList<UnusedMediaBlockListLayoutItem> items = json.GetArrayItems("Umbraco.BlockList", ParseBlockListLayoutItem);
         return new UnusedMediaBlockListLayout(items, json);
     }
 
-    public virtual UnusedMediaBlockListLayoutItem ParseBlockListLayoutItem(JObject json) {
-        var contentUdi = json.GetRequiredString("contentUdi");
-        var settingsUdi = json.GetString("settingsUdi");
-        return new UnusedMediaBlockListLayoutItem(contentUdi, settingsUdi);
+    /// <summary>
+    /// Parses a single item of the <c>Umbraco.BlockList</c> layout array.
+    /// </summary>
+    public virtual UnusedMediaBlockListLayoutItem ParseBlockListLayoutItem(JsonObject json) {
+        Guid contentKey = json.GetRequiredGuid("contentKey");
+        Guid? settingsKey = json.GetGuid("settingsKey");
+        return new UnusedMediaBlockListLayoutItem(contentKey, settingsKey);
     }
 
-    public virtual UnusedMediaBlockListContentData ParseBlockListContentData(JObject json) {
+    /// <summary>
+    /// Parses a single entry of the <c>contentData</c> or <c>settingsData</c> array.
+    /// </summary>
+    public virtual UnusedMediaBlockListContentData ParseBlockListContentData(JsonObject json) {
 
         Guid contentTypeKey = json.GetRequiredGuid("contentTypeKey");
-        string udi = json.GetRequiredString("udi");
+        Guid key = json.GetRequiredGuid("key");
 
         Dictionary<string, object?> properties = [];
+        Dictionary<string, string?> editorAliases = [];
 
-        foreach (var property in json.Properties()) {
-            if (property.Name is "contentTypeKey" or "udi") continue;
+        foreach (JsonNode? item in json.GetArray("values") ?? []) {
 
-            if (property.Value.Type == JTokenType.String && property.Value.ToString().StartsWith("{\"layout\":{\"Umbraco.BlockList\":")) {
-                properties[property.Name] = ParseBlockList(JObject.Parse(property.Value.ToString()));
-            } else {
-                properties[property.Name] = property.Value.Type == JTokenType.Null ? null : property.Value.ToObject<object>();
+            if (item is not JsonObject value) continue;
+
+            string? alias = value.GetString("alias");
+            if (string.IsNullOrWhiteSpace(alias)) continue;
+
+            editorAliases[alias] = value.GetString("editorAlias");
+
+            JsonNode? node = value["value"];
+
+            // A nested block list is now a nested JSON object rather than a JSON encoded string
+            if (node is JsonObject nested && nested["layout"] is JsonObject nestedLayout && nestedLayout.ContainsKey("Umbraco.BlockList")) {
+                properties[alias] = ParseBlockList(nested);
+                continue;
             }
+
+            properties[alias] = node;
+
         }
 
-        return new UnusedMediaBlockListContentData(contentTypeKey, udi, properties);
+        return new UnusedMediaBlockListContentData(contentTypeKey, key, properties, editorAliases);
 
     }
 

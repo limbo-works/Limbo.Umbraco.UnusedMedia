@@ -1,17 +1,18 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<StaticWebAssetBasePath>App_Plugins/$(AssemblyName)</StaticWebAssetBasePath>
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<VersionPrefix>13.0.4</VersionPrefix>
-		<VersionSuffix Condition="'$(Configuration)'=='Debug'">build$([System.DateTime]::UtcNow.ToString(`yyyyMMddHHmm`))</VersionSuffix>
+		<VersionPrefix>17.0.0</VersionPrefix>
+		<VersionSuffix>alpha000</VersionSuffix>
+		<VersionSuffix Condition="'$(Configuration)'=='Debug'">alpha000.build$([System.DateTime]::UtcNow.ToString(`yyyyMMddHHmm`))</VersionSuffix>
 		<Company>Limbo</Company>
 		<Authors>Anders Bjerner, Thomas Nielsen</Authors>
 		<Copyright>Copyright © $([System.DateTime]::UtcNow.ToString(`yyyy`))</Copyright>
@@ -25,7 +26,7 @@
 	<PropertyGroup>
 		<PackageTags>Limbo, Skybrud, Umbraco, UnusedMedia</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageProjectUrl>https://packages.limbo.works/limbo.umbraco.unusedmedia/v13/</PackageProjectUrl>
+		<PackageProjectUrl>https://packages.limbo.works/limbo.umbraco.unusedmedia/v17/</PackageProjectUrl>
 		<PackageIcon>Limbo.png</PackageIcon>
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/limbo-works/Limbo.Umbraco.UnusedMedia</RepositoryUrl>
@@ -34,28 +35,23 @@
 	<!-- Include additional metadata in the assembly -->
 	<ItemGroup>
 		<AssemblyMetadata Include="PackageProjectUrl" Value="https://packages.limbo.works/limbo.umbraco.unusedmedia/" />
-		<AssemblyMetadata Include="DocumentationUrl" Value="https://packages.limbo.works/limbo.umbraco.unusedmedia/docs/v13/" />
+		<AssemblyMetadata Include="DocumentationUrl" Value="https://packages.limbo.works/limbo.umbraco.unusedmedia/docs/v17/" />
 		<AssemblyMetadata Include="NuGetUrl" Value="https://www.nuget.org/packages/Limbo.Umbraco.UnusedMedia" />
 		<AssemblyMetadata Include="UmbracoMarketplaceUrl" Value="https://marketplace.umbraco.com/package/limbo.umbraco.unusedmedia" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Limbo.Forms" Version="1.0.2" />
-		<PackageReference Include="Skybrud.Essentials.AspNetCore" Version="1.0.2" />
-		<PackageReference Include="Skybrud.Essentials.Umbraco" Version="13.0.7" />
-		<PackageReference Include="Umbraco.Cms.Web.Website" Version="13.0.0" NoWarn="NU1902" />
-		<PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="13.0.0" NoWarn="NU1902" />
-		<PackageReference Include="Skybrud.Essentials" Version="1.1.66" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Skybrud.Essentials" Version="1.1.68" />
+		<PackageReference Include="Umbraco.Cms.Web.Website" Version="[17.0.0,17.9.9)" />
+		<PackageReference Include="Umbraco.Cms.Api.Management" Version="[17.0.0,17.9.9)" />
 	</ItemGroup>
 
 	<!-- Include backoffice assets -->
 	<ItemGroup>
 		<Content Remove="wwwroot\**\*" />
 		<Content Include="wwwroot\**\*.css" />
-		<Content Include="wwwroot\**\*.html" />
 		<Content Include="wwwroot\**\*.js" />
-		<Content Include="wwwroot\Lang\*.xml" />
+		<Content Include="wwwroot\umbraco-package.json" />
 	</ItemGroup>
 
 	<!-- Include package icon for NuGet -->

@@ -40,6 +40,6 @@ public class UnusedMediaPackage {
     /// <summary>
     /// Gets the URL of the documentation for this package.
     /// </summary>
-    public const string DocumentationUrl = "https://packages.limbo.works/limbo.umbraco.unusedmedia/v13.0/";
+    public const string DocumentationUrl = "https://packages.limbo.works/limbo.umbraco.unusedmedia/v17.0/";
 
 }

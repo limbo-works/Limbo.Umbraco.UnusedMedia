@@ -1,20 +1,21 @@
-﻿using Newtonsoft.Json;
-using Skybrud.Essentials.Time;
+// [CHANGE: Umbraco 17 upgrade - System.Text.Json + DateTimeOffset] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
+
+using System.Text.Json.Serialization;
 
 namespace Limbo.Umbraco.UnusedMedia.Models.Reports;
 
 public class UsedMediaReportSummary {
 
-    [JsonProperty("alias")]
+    [JsonPropertyName("alias")]
     public string Alias { get; }
 
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; }
 
-    [JsonProperty("createDate")]
-    public EssentialsTime CreateDate { get; }
+    [JsonPropertyName("createDate")]
+    public DateTimeOffset CreateDate { get; }
 
-    [JsonProperty("keys")]
+    [JsonPropertyName("keys")]
     public int Keys { get; }
 
     public UsedMediaReportSummary(IUsedMediaReport report) {

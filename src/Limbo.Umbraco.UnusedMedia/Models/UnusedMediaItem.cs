@@ -1,6 +1,7 @@
+// [CHANGE: Umbraco 17 upgrade - System.Text.Json + DateTimeOffset] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
+
+using System.Text.Json.Serialization;
 using Limbo.Umbraco.UnusedMedia.Helpers;
-using Newtonsoft.Json;
-using Skybrud.Essentials.Time;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
 
@@ -8,40 +9,40 @@ namespace Limbo.Umbraco.UnusedMedia.Models;
 
 public class UnusedMediaItem {
 
-    [JsonProperty("id")]
+    [JsonPropertyName("id")]
     public int Id { get; }
 
-    [JsonProperty("key")]
+    [JsonPropertyName("key")]
     public Guid Key { get; }
 
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; }
 
-    [JsonProperty("url")]
+    [JsonPropertyName("url")]
     public string Url { get; }
 
-    [JsonProperty("path")]
+    [JsonPropertyName("path")]
     public string[] Path { get; }
 
-    [JsonProperty("createDate")]
-    public EssentialsTime CreateDate { get; }
+    [JsonPropertyName("createDate")]
+    public DateTimeOffset CreateDate { get; }
 
-    [JsonProperty("updateDate")]
-    public EssentialsTime UpdateDate { get; }
+    [JsonPropertyName("updateDate")]
+    public DateTimeOffset UpdateDate { get; }
 
-    [JsonProperty("creatorId")]
+    [JsonPropertyName("creatorId")]
     public int CreatorId { get; }
 
-    [JsonProperty("creatorName")]
+    [JsonPropertyName("creatorName")]
     public string? CreatorName { get; }
 
-    [JsonProperty("writerId")]
+    [JsonPropertyName("writerId")]
     public int WriterId { get; }
 
-    [JsonProperty("writerName")]
+    [JsonPropertyName("writerName")]
     public string? WriterName { get; }
 
-    [JsonProperty("cells")]
+    [JsonPropertyName("cells")]
     public IReadOnlyList<UnusedMediaItemCell> Cells { get; }
 
     public UnusedMediaItem(IPublishedContent media, IReadOnlyList<UnusedMediaItemCell> cells) {

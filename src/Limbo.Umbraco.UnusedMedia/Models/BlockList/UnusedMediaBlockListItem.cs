@@ -1,22 +1,18 @@
-﻿namespace Limbo.Umbraco.UnusedMedia.Models.BlockList;
+// [CHANGE: Umbraco 17 upgrade - block editors switched from UDIs to GUID keys in Umbraco 14] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
+
+namespace Limbo.Umbraco.UnusedMedia.Models.BlockList;
 
 public class UnusedMediaBlockListItem {
 
-    public string ContentUdi {
-        get => Item.ContentUdi;
-        //set {
-        //    Item.ContentUdi = value;
-        //    Content.Udi = value;
-        //}
-    }
+    /// <summary>
+    /// Gets the key of the content of the block.
+    /// </summary>
+    public Guid ContentKey => Item.ContentKey;
 
-    public string? SettingsUdi {
-        get => Item.SettingsUdi;
-        //set {
-        //    Item.SettingsUdi = value;
-        //    if (Settings is not null) Settings.Udi = value;
-        //}
-    }
+    /// <summary>
+    /// Gets the key of the settings of the block, if any.
+    /// </summary>
+    public Guid? SettingsKey => Item.SettingsKey;
 
     public UnusedMediaBlockListLayoutItem Item { get; }
 
