@@ -1,22 +1,20 @@
-﻿using Examine;
-using Limbo.Forms.Models.Fields;
+// [CHANGE: Umbraco 17 upgrade - Management API, System.Text.Json, ensured UmbracoContext, client side localization] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
+
+using System.Text.Json.Serialization;
+using Examine;
 using Limbo.Umbraco.UnusedMedia.Models;
+using Limbo.Umbraco.UnusedMedia.Models.Filters;
 using Limbo.Umbraco.UnusedMedia.Models.Reports;
 using Limbo.Umbraco.UnusedMedia.Models.Settings;
 using Limbo.Umbraco.UnusedMedia.Models.Sites;
 using Limbo.Umbraco.UnusedMedia.Services;
 using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
-using Skybrud.Essentials.AspNetCore;
+using Microsoft.Extensions.DependencyInjection;
 using Skybrud.Essentials.Collections;
-using Skybrud.Essentials.Collections.Extensions;
-using Skybrud.Essentials.Exceptions;
+using Skybrud.Essentials.Collections.Enumerables.Extensions;
 using Skybrud.Essentials.Guids;
 using Skybrud.Essentials.Strings;
 using Skybrud.Essentials.Strings.Extensions;
-using Skybrud.Essentials.Umbraco;
-using Skybrud.Essentials.Umbraco.Constants;
-using Skybrud.Essentials.Umbraco.Examine;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -31,8 +29,8 @@ public class UnusedMediaBackOfficeHelper {
     private readonly UnusedMediaBackOfficeHelperDependencies _dependencies;
 
     private readonly IUserService _userService;
-    private readonly ILocalizedTextService _localizedTextService;
-    private readonly IUmbracoContextAccessor _umbracoContextAccessor;
+    private readonly IUmbracoContextFactory _umbracoContextFactory;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly UnusedMediaService _unusedMediaService;
     private readonly IExamineManager _examineManager;
 
@@ -47,8 +45,8 @@ public class UnusedMediaBackOfficeHelper {
     public UnusedMediaBackOfficeHelper(UnusedMediaBackOfficeHelperDependencies dependencies) {
         _dependencies = dependencies;
         _userService = dependencies.UserService;
-        _localizedTextService = dependencies.LocalizedTextService;
-        _umbracoContextAccessor = dependencies.UmbracoContextAccessor;
+        _umbracoContextFactory = dependencies.UmbracoContextFactory;
+        _serviceScopeFactory = dependencies.ServiceScopeFactory;
         _unusedMediaService = dependencies.UnusedMediaService;
         _examineManager = dependencies.ExamineManager;
     }
@@ -57,35 +55,25 @@ public class UnusedMediaBackOfficeHelper {
 
     #region Public member methods
 
-    /// <summary>
-    /// Returns a cache buster value based both on Umbraco's own cache buster and the current version of
-    /// this package. This ensures a new cache buster value when either the ClientDependency version is bumped or
-    /// the package is updated.
-    /// </summary>
-    /// <returns>The cache buster value.</returns>
-    public virtual string GetCacheBuster() {
-        string version1 = _dependencies.RuntimeState.SemanticVersion.ToSemanticString();
-        string version2 = UnusedMediaPackage.InformationalVersion;
-        return $"{version1}.{_dependencies.RuntimeState.Level}.{version2}".ToSHA1();
-    }
-
-    /// <summary>
-    /// Returns a dictionary with server variables for this package, available through <c>Umbraco.Sys.ServerVariables.limbo.unusedMedia</c> in the backoffice.
-    /// </summary>
-    /// <returns>An instance of <see cref="Dictionary{TKey,TValue}"/>.</returns>
-    public virtual Dictionary<string, object> GetServerVariables() {
-
-        // Append the "redirects" dictionary to "skybrud"
-        return new Dictionary<string, object> {
-            {"cacheBuster", GetCacheBuster()},
-            {"version", UnusedMediaPackage.InformationalVersion},
-            {"dashboardElementName", _dependencies.Settings.Dashboard.ElementName}
-        };
-
-    }
-
     public virtual IReadOnlyList<UnusedSiteItem> GetSites() {
         return [];
+    }
+
+    /// <summary>
+    /// Returns whether the specified <paramref name="user"/> is allowed to use the unused media dashboard, according
+    /// to the <c>Dashboard:AllowedGroups</c> setting. If no groups are configured, all backoffice users with access
+    /// to the content section are allowed.
+    ///
+    /// In Umbraco 13 this was enforced through <c>IDashboard.AccessRules</c>, which only hid the dashboard in the UI.
+    /// That interface no longer exists in Umbraco 17, so the check now lives here and is enforced by the Management
+    /// API controller on every endpoint.
+    /// </summary>
+    /// <param name="user">The user to check.</param>
+    /// <returns><see langword="true"/> if <paramref name="user"/> is allowed; otherwise <see langword="false"/>.</returns>
+    public virtual bool IsAllowed(IUser user) {
+        List<string> allowedGroups = Settings.Dashboard.AllowedGroups;
+        if (allowedGroups.Count == 0) return true;
+        return user.Groups.Any(x => allowedGroups.Contains(x.Alias, StringComparer.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -96,23 +84,22 @@ public class UnusedMediaBackOfficeHelper {
     /// <returns>An instance of <see cref="UnusedMediaOptions"/>.</returns>
     public virtual UnusedMediaOptions CreateOptions(HttpRequest request, IUser currentUser) {
 
-        int limit = request.Query.GetInt32("limit");
+        // [CHANGE: code review fix - a "Dashboard:PerPage" of 0 (or negative) made "GetUnusedMedia" divide by zero
+        // when calculating the page count, and "Take(0)" returned an empty list] Related: Controllers/BackOffice/UnusedMediaBackOfficeController.cs
+        int limit = GetInt32(request, "limit");
         if (limit <= 0) limit = Settings.Dashboard.PerPage;
+        if (limit <= 0) limit = 15;
 
-        int page = Math.Max(request.Query.GetInt32("page"), 1);
+        int page = Math.Max(GetInt32(request, "page"), 1);
 
-        string name = Localize("name");
-        string updateDate = Localize("updateDate");
-        string creator = Localize("creator");
-        string writer = Localize("writer");
-        string size = Localize("size");
-
+        // Columns carry a localization key and an English fallback. Server side localization via
+        // ILocalizedTextService was dropped in the Umbraco 17 upgrade - the new backoffice localizes in the client.
         List<UnusedMediaColumn> columns = [
-            new("name", name, UnusedMediaColumnType.Name, allowSort: true, defaultOrder: SortOrder.Ascending),
-            new("updateDate", updateDate, UnusedMediaColumnType.DateTime, allowSort: true, defaultOrder: SortOrder.Descending),
-            new("creatorId", creator, UnusedMediaColumnType.User),
-            new("writerId", writer, UnusedMediaColumnType.User),
-            new("size", size, UnusedMediaColumnType.Bytes, allowSort: true, defaultOrder: SortOrder.Descending)
+            new("name", "Name", "unusedMedia_name", UnusedMediaColumnType.Name, allowSort: true, defaultOrder: SortOrder.Ascending),
+            new("updateDate", "Last updated", "unusedMedia_updateDate", UnusedMediaColumnType.DateTime, allowSort: true, defaultOrder: SortOrder.Descending),
+            new("creatorId", "Created by", "unusedMedia_creator", UnusedMediaColumnType.User),
+            new("writerId", "Changed by", "unusedMedia_writer", UnusedMediaColumnType.User),
+            new("size", "Size", "unusedMedia_size", UnusedMediaColumnType.Bytes, allowSort: true, defaultOrder: SortOrder.Descending)
         ];
 
         return new UnusedMediaOptions {
@@ -123,8 +110,8 @@ public class UnusedMediaBackOfficeHelper {
             WriterIds = StringUtils.ParseInt32Set(request.Query["writerId"]),
             Limit = limit,
             Page = page,
-            SortField = request.Query.GetString("sortField"),
-            SortOrder = request.Query.GetString("sortOrder") is "desc" or "descending" ? SortOrder.Descending : SortOrder.Ascending,
+            SortField = GetString(request, "sortField"),
+            SortOrder = GetString(request, "sortOrder") is "desc" or "descending" ? SortOrder.Descending : SortOrder.Ascending,
             Columns = columns,
             IgnoredFolderIds = Settings.IgnoredFolderIds
         };
@@ -145,87 +132,95 @@ public class UnusedMediaBackOfficeHelper {
 
         List<IPublishedContent> temp = [];
 
-        if (!_umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext? umbracoContext)) throw new Exception("Failed getting current Umbraco context.");
-        if (umbracoContext.Media is null) throw new BjernerSaysNoException();
+        // Management API requests don't have an ambient Umbraco context, so ensure one before touching the
+        // published media cache. "IPublishedContentQuery" is scoped, hence the extra service scope.
+        using (UmbracoContextReference contextReference = _umbracoContextFactory.EnsureUmbracoContext())
+        using (IServiceScope scope = _serviceScopeFactory.CreateScope()) {
 
-        foreach (IPublishedContent media in umbracoContext.Media.GetAtRoot()) {
+            IPublishedContentQuery publishedContentQuery = scope.ServiceProvider.GetRequiredService<IPublishedContentQuery>();
 
-            // Skip media if a part of their path is ignored
-            if (options.IgnoredFolderIds is { Count: > 0 }) {
-                if (media.Path.ToInt32Array().Any(x => options.IgnoredFolderIds.Contains(x))) {
-                    continue;
-                }
-            }
+            foreach (IPublishedContent media in publishedContentQuery.MediaAtRoot()) {
 
-            // Handle non-folder media types at the root level
-            if (IsMatch(media, options)) {
-
-                // Increment the total count regardless if the media is in use or not
-                total++;
-
-                // Append the media to the list of not in use
-                if (!keys.Contains(media.Key)) temp.Add(media);
-
-            }
-
-            // Iterate through all the descendants
-            foreach (IPublishedContent descendant in media.Descendants()) {
-
-                if (!IsMatch(descendant, options)) {
-                    continue;
+                // Skip media if a part of their path is ignored
+                if (options.IgnoredFolderIds is { Count: > 0 }) {
+                    if (media.Path.ToInt32Array().Any(x => options.IgnoredFolderIds.Contains(x))) {
+                        continue;
+                    }
                 }
 
-                // Skip if a folder
-                if (descendant.ContentType.Alias == Constants.Conventions.MediaTypes.Folder) {
-                    continue;
+                // Handle non-folder media types at the root level
+                if (IsMatch(media, options)) {
+
+                    // Increment the total count regardless if the media is in use or not
+                    total++;
+
+                    // Append the media to the list of not in use
+                    if (!keys.Contains(media.Key)) temp.Add(media);
+
                 }
 
-                // Increment the total count regardless of if the media is in use or not
-                total++;
+                // Iterate through all the descendants
+                foreach (IPublishedContent descendant in media.Descendants()) {
 
-                // Skip if in use
-                if (keys.Contains(descendant.Key)) continue;
+                    if (!IsMatch(descendant, options)) {
+                        continue;
+                    }
 
-                temp.Add(descendant);
+                    // Skip if a folder
+                    if (descendant.ContentType.Alias == Constants.Conventions.MediaTypes.Folder) {
+                        continue;
+                    }
+
+                    // Increment the total count regardless of if the media is in use or not
+                    total++;
+
+                    // Skip if in use
+                    if (keys.Contains(descendant.Key)) continue;
+
+                    temp.Add(descendant);
+
+                }
 
             }
+
+            int limit = options.Limit;
+            int unused = temp.Count;
+            int pages = (int) Math.Ceiling(unused / (double) limit);
+            int page = Math.Max(options.Page, 1);
+            int offset = (page - 1) * options.Limit;
+            UnusedMediaColumn? sortField = options.Columns.FirstOrDefault(x => x.Alias.InvariantEquals(options.SortField));
+            SortOrder sortOrder = options.SortOrder ?? sortField?.DefaultOrder ?? SortOrder.Ascending;
+            string? sortFieldAlias = sortField?.Alias;
+
+            // Sort the results based on the specified sort field and order
+            IEnumerable<IPublishedContent> meh;
+            switch (sortField?.Alias) {
+                case "name":
+                    meh = temp.OrderBy(x => x.Name, sortOrder);
+                    break;
+                case "updateDate":
+                    meh = temp.OrderBy(x => x.UpdateDate, sortOrder);
+                    break;
+                case "size":
+                    // "GetInt32" came from Skybrud.Essentials.Umbraco, which has no stable Umbraco 17 release
+                    meh = temp.OrderBy(x => x.Value<int>("umbracoBytes"), sortOrder);
+                    break;
+                default:
+                    sortFieldAlias = "updateDate";
+                    sortOrder = SortOrder.Descending;
+                    meh = temp.OrderBy(x => x.UpdateDate, sortOrder);
+                    break;
+            }
+
+            // The items are materialized inside the Umbraco context scope, as building each item reads properties
+            // and URLs off the published cache
+            List<UnusedMediaItem> items = meh.Skip(offset).Take(options.Limit).Select(x => CreateItem(x, options)).ToList();
+
+            IReadOnlyList<UsedMediaReportSummary> summaries = reports.Select(x => new UsedMediaReportSummary(x)).ToList();
+
+            return new UnusedMediaResult(total, unused, limit, offset, page, pages, sortFieldAlias, sortOrder, summaries, options.Columns, items);
 
         }
-
-
-        int limit = options.Limit;
-        int unused = temp.Count;
-        int pages = (int) Math.Ceiling(unused / (double) limit);
-        int page = Math.Max(options.Page, 1);
-        int offset = (page - 1) * options.Limit;
-        UnusedMediaColumn? sortField = options.Columns.FirstOrDefault(x => x.Alias.InvariantEquals(options.SortField));
-        SortOrder sortOrder = options.SortOrder ?? sortField?.DefaultOrder ?? SortOrder.Ascending;
-        string? sortFieldAlias = sortField?.Alias;
-
-        // Sort the results based on the specified sort field and order
-        IEnumerable<IPublishedContent> meh;
-        switch (sortField?.Alias) {
-            case "name":
-                meh = temp.OrderBy(x => x.Name, sortOrder);
-                break;
-            case "updateDate":
-                meh = temp.OrderBy(x => x.UpdateDate, sortOrder);
-                break;
-            case "size":
-                meh = temp.OrderBy(x => x.GetInt32("umbracoBytes"), sortOrder);
-                break;
-            default:
-                sortFieldAlias = "updateDate";
-                sortOrder = SortOrder.Descending;
-                meh = temp.OrderBy(x => x.UpdateDate, sortOrder);
-                break;
-        }
-
-        IEnumerable<UnusedMediaItem> items = meh.Skip(offset).Take(options.Limit).Select(x => CreateItem(x, options));
-
-        IReadOnlyList<UsedMediaReportSummary> summaries = reports.Select(x => new UsedMediaReportSummary(x)).ToList();
-
-        return new UnusedMediaResult(total, unused, limit, offset, page, pages, sortFieldAlias, sortOrder, summaries, options.Columns, items);
 
     }
 
@@ -247,7 +242,7 @@ public class UnusedMediaBackOfficeHelper {
             return false;
         }
 
-        int[] path = media.Path.ToInt32Array();
+        IReadOnlyList<int> path = Workarounds.GetPath(media);
 
         // Ignore media if a part of their path is ignored
         if (!options.IncludeIgnored && path.Any(x => options.IgnoredFolderIds.Contains(x))) {
@@ -309,7 +304,7 @@ public class UnusedMediaBackOfficeHelper {
                             if (udi.EntityType is "user") {
                                 int userId = udi.Guid.ToInt32();
                                 valueName = _userService.GetUserById(userId)?.Name; // TODO: cache user lookups
-                            } else if (udi.EntityType == UmbracoEntityTypes.Member) {
+                            } else if (udi.EntityType == Constants.UdiEntityType.Member) {
                                 valueName = GetMemberName(udi.Guid);
                             }
                         }
@@ -324,14 +319,21 @@ public class UnusedMediaBackOfficeHelper {
     }
 
     protected virtual string? GetMemberName(Guid key) {
-        return _examineManager
-            .GetRequiredIndex(ExamineIndexes.MembersIndex)
-            .GetSearcher()
+
+        // "Skybrud.Essentials.Umbraco" has no stable Umbraco 17 release, so both the "ExamineIndexes.MembersIndex"
+        // constant and the "GetRequiredIndex" extension method it provided have been swapped for Umbraco/Examine's
+        // own equivalents
+        if (!_examineManager.TryGetIndex(Constants.UmbracoIndexes.MembersIndexName, out IIndex? index)) return null;
+
+        return index
+            .Searcher
             .CreateQuery()
             .NativeQuery($"__Key:\"{key}\"")
             .Execute()
             .FirstOrDefault()?
-            .GetString("nodeName");
+            .Values
+            .GetValueOrDefault("nodeName");
+
     }
 
     protected virtual UnusedMediaItem CreateItem(IPublishedContent media, UnusedMediaOptions options) {
@@ -345,9 +347,9 @@ public class UnusedMediaBackOfficeHelper {
 
     }
 
-    public virtual List<FieldBase> CreateFilters(HttpRequest request, IUser user) {
+    public virtual List<UnusedMediaFilter> CreateFilters(HttpRequest request, IUser user) {
 
-        List<FieldBase> filters = [];
+        List<UnusedMediaFilter> filters = [];
 
         AppendTextFilter(request, user, filters);
         AppendFoldersFilters(request, user, filters);
@@ -363,33 +365,36 @@ public class UnusedMediaBackOfficeHelper {
     /// <param name="request">The current HTTP request.</param>
     /// <param name="currentUser">The current user.</param>
     /// <param name="filters">The list of filters.</param>
-    protected virtual void AppendFoldersFilters(HttpRequest request, IUser currentUser, List<FieldBase> filters) {
+    protected virtual void AppendFoldersFilters(HttpRequest request, IUser currentUser, List<UnusedMediaFilter> filters) {
 
         // Initialize the list with an item for an empty selection
-        List<ListItem> items = [new("", Localize("selectFolder"))];
+        List<UnusedMediaFilterItem> items = [new("", "Select folder...", "unusedMedia_selectFolder")];
 
-        if (!_umbracoContextAccessor.TryGetUmbracoContext(out var umbracoContext)) {
-            return;
-        }
+        using (UmbracoContextReference contextReference = _umbracoContextFactory.EnsureUmbracoContext())
+        using (IServiceScope scope = _serviceScopeFactory.CreateScope()) {
 
-        // Iterate through all media at the root level
-        foreach (IPublishedContent level1 in umbracoContext.Media!.GetAtRoot()) {
+            IPublishedContentQuery publishedContentQuery = scope.ServiceProvider.GetRequiredService<IPublishedContentQuery>();
 
-            // Ignore if not a folder
-            if (level1.ContentType.Alias != Constants.Conventions.MediaTypes.Folder) {
-                continue;
+            // Iterate through all media at the root level
+            foreach (IPublishedContent level1 in publishedContentQuery.MediaAtRoot()) {
+
+                // Ignore if not a folder
+                if (level1.ContentType.Alias != Constants.Conventions.MediaTypes.Folder) {
+                    continue;
+                }
+
+                // Append an item for the folder
+                items.Add(new UnusedMediaFilterItem(level1.Id, level1.Name));
+
+                // Append child folders as well
+                AppendChildren(items, level1, 2);
+
             }
-
-            // Append an item for the folder
-            items.Add(new ListItem(level1.Id, level1.Name));
-
-            // Append child folders as well
-            AppendChildren(items, level1, 2);
 
         }
 
         // Initialize and append the filter
-        filters.Add(new DropDownList("path") {
+        filters.Add(new UnusedMediaDropDownFilter("path") {
             Items = items
         });
 
@@ -404,13 +409,13 @@ public class UnusedMediaBackOfficeHelper {
     /// <param name="items">The list of items to which the children will be added.</param>
     /// <param name="parent">The parent media.</param>
     /// <param name="levels">The maximum level or depth to append folders for.</param>
-    protected virtual void AppendChildren(List<ListItem> items, IPublishedContent parent, int levels) {
+    protected virtual void AppendChildren(List<UnusedMediaFilterItem> items, IPublishedContent parent, int levels) {
 
         if (parent.Level == levels) {
             return;
         }
 
-        foreach (IPublishedContent child in parent.Children) {
+        foreach (IPublishedContent child in parent.Children()) {
 
             // Skip if not a folder
             if (child.ContentType.Alias != Constants.Conventions.MediaTypes.Folder) {
@@ -424,21 +429,13 @@ public class UnusedMediaBackOfficeHelper {
                 name = "-- " + name;
             }
 
-            items.Add(new ListItem(child.Id, name));
+            items.Add(new UnusedMediaFilterItem(child.Id, name));
 
             // Run through the child's children
             AppendChildren(items, child, levels);
 
         }
 
-    }
-
-    public string Localize(string alias) {
-        return _localizedTextService.Localize("unusedMediaDashboard", alias);
-    }
-
-    public string Localize(string? area, string alias) {
-        return _localizedTextService.Localize(area, alias);
     }
 
     #endregion
@@ -451,9 +448,10 @@ public class UnusedMediaBackOfficeHelper {
     /// <param name="request">The current HTTP request.</param>
     /// <param name="currentUser">The current user.</param>
     /// <param name="filters">The list of filters.</param>
-    protected virtual void AppendTextFilter(HttpRequest request, IUser currentUser, List<FieldBase> filters) {
-        filters.Add(new TextField("text") {
-            Placeholder = Localize(null, "typeToSearch")
+    protected virtual void AppendTextFilter(HttpRequest request, IUser currentUser, List<UnusedMediaFilter> filters) {
+        filters.Add(new UnusedMediaTextFilter("text") {
+            Placeholder = "Type to search...",
+            PlaceholderKey = "general_typeToSearch"
         });
     }
 
@@ -463,31 +461,31 @@ public class UnusedMediaBackOfficeHelper {
     /// <param name="request">The current HTTP request.</param>
     /// <param name="currentUser">The current user.</param>
     /// <param name="filters">The list of filters.</param>
-    protected virtual void AppendCreatorsAndWritersFilters(HttpRequest request, IUser currentUser, List<FieldBase> filters) {
+    protected virtual void AppendCreatorsAndWritersFilters(HttpRequest request, IUser currentUser, List<UnusedMediaFilter> filters) {
 
-        List<ListItem> creators = [];
-        List<ListItem> writers = [];
+        List<UnusedMediaFilterItem> creators = [];
+        List<UnusedMediaFilterItem> writers = [];
 
-        creators.Add(new ListItem("", Localize("createdBy")));
-        creators.Add(new ListItem(currentUser.Id, Localize("me")));
+        creators.Add(new UnusedMediaFilterItem("", "Created by", "unusedMedia_creator"));
+        creators.Add(new UnusedMediaFilterItem(currentUser.Id, "Me", "unusedMedia_me"));
 
-        writers.Add(new ListItem("", Localize("updatedBy")));
-        writers.Add(new ListItem(currentUser.Id, Localize("me")));
+        writers.Add(new UnusedMediaFilterItem("", "Changed by", "unusedMedia_writer"));
+        writers.Add(new UnusedMediaFilterItem(currentUser.Id, "Me", "unusedMedia_me"));
 
         foreach (IUser user in GetUsers(request, currentUser)) {
             if (currentUser.Id == user.Id) {
                 continue;
             }
 
-            creators.Add(new ListItem(user.Id, user.Name ?? string.Empty));
-            writers.Add(new ListItem(user.Id, user.Name ?? string.Empty));
+            creators.Add(new UnusedMediaFilterItem(user.Id, user.Name ?? string.Empty));
+            writers.Add(new UnusedMediaFilterItem(user.Id, user.Name ?? string.Empty));
         }
 
-        filters.Add(new DropDownList("creatorId") {
+        filters.Add(new UnusedMediaDropDownFilter("creatorId") {
             Items = creators
         });
 
-        filters.Add(new DropDownList("writerId") {
+        filters.Add(new UnusedMediaDropDownFilter("writerId") {
             Items = writers
         });
 
@@ -509,22 +507,42 @@ public class UnusedMediaBackOfficeHelper {
             .OrderBy(x => x.Name);
     }
 
+    /// <summary>
+    /// Returns the value of the query string parameter with the specified <paramref name="key"/> as an integer, or
+    /// <c>0</c> if the parameter isn't present or doesn't hold a valid integer.
+    ///
+    /// Replaces the equivalent helper of <c>Skybrud.Essentials.AspNetCore</c>, which was dropped as part of the
+    /// Umbraco 17 upgrade as it pulls in the Newtonsoft based ASP.NET Core MVC packages.
+    /// </summary>
+    protected static int GetInt32(HttpRequest request, string key) {
+        return int.TryParse(request.Query[key], out int result) ? result : 0;
+    }
+
+    /// <summary>
+    /// Returns the value of the query string parameter with the specified <paramref name="key"/>, or
+    /// <see langword="null"/> if the parameter isn't present or is empty.
+    /// </summary>
+    protected static string? GetString(HttpRequest request, string key) {
+        string? value = request.Query[key];
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
     #endregion
 
 }
 
 public class UnusedMediaItemCell {
 
-    [JsonProperty("alias")]
+    [JsonPropertyName("alias")]
     public string Alias { get; }
 
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; }
 
-    [JsonProperty("value")]
+    [JsonPropertyName("value")]
     public object? Value { get; }
 
-    [JsonProperty("text")]
+    [JsonPropertyName("text")]
     public string? Text { get; }
 
     public UnusedMediaItemCell(UnusedMediaColumn column, string name, object? value = null, string? text = null) {

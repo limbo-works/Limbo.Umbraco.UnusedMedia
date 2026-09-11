@@ -1,7 +1,8 @@
-﻿using Limbo.Umbraco.UnusedMedia.Models.Reports;
+// [CHANGE: Umbraco 17 upgrade - EssentialsTime replaced by DateTimeOffset] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
+
+using Limbo.Umbraco.UnusedMedia.Models.Reports;
 using Limbo.Umbraco.UnusedMedia.Providers;
 using Microsoft.Extensions.Logging;
-using Skybrud.Essentials.Time;
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
@@ -78,7 +79,7 @@ public class UnusedMediaService {
         foreach (UsedMediaProvider provider in GetUsedMediaProviders()) {
             IUsedMediaReport report = (IUsedMediaReport) AppCaches.RuntimeCache.Get(GetCacheKey(provider), () => {
                 HashSet<Guid> keys = provider.ScanForUsedMediaKeys();
-                return new UsedMediaReport(provider, EssentialsTime.UtcNow, keys);
+                return new UsedMediaReport(provider, DateTimeOffset.UtcNow, keys);
             }, TimeSpan.FromMinutes(10))!;
             temp.Add(report);
         }
@@ -102,7 +103,7 @@ public class UnusedMediaService {
 
     protected virtual IUsedMediaReport BuildUsedMediaReportInternal(UsedMediaProvider provider) {
         HashSet<Guid> keys = provider.ScanForUsedMediaKeys();
-        return new UsedMediaReport(provider, EssentialsTime.UtcNow, keys);
+        return new UsedMediaReport(provider, DateTimeOffset.UtcNow, keys);
     }
 
     protected virtual string GetCacheKey(UsedMediaProvider provider) {

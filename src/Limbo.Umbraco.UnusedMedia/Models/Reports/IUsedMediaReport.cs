@@ -1,4 +1,5 @@
-﻿using Skybrud.Essentials.Time;
+// [CHANGE: Umbraco 17 upgrade - EssentialsTime replaced by DateTimeOffset for System.Text.Json] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
+
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Limbo.Umbraco.UnusedMedia.Models.Reports;
@@ -21,7 +22,7 @@ public interface IUsedMediaReport {
     /// <summary>
     /// Gets a timestamp for when the report was generated.
     /// </summary>
-    EssentialsTime CreateDate { get; }
+    DateTimeOffset CreateDate { get; }
 
     /// <summary>
     /// Returns a set of the keys of the media that are in use, according to the report.

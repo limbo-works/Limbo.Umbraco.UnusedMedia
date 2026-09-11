@@ -1,27 +1,42 @@
+// [CHANGE: Umbraco 17 upgrade - System.Text.Json + client side localization] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
+
 using System.Diagnostics.CodeAnalysis;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+using Limbo.Umbraco.UnusedMedia.Json;
 using Skybrud.Essentials.Collections;
-using Skybrud.Essentials.Json.Newtonsoft.Converters.Enums;
 
 namespace Limbo.Umbraco.UnusedMedia.Models;
 
 public class UnusedMediaColumn {
 
-    [JsonProperty("alias")]
+    [JsonPropertyName("alias")]
     public required string Alias { get; set; }
 
-    [JsonProperty("name")]
+    /// <summary>
+    /// Gets or sets the fallback name of the column. Used by the dashboard when <see cref="NameKey"/> is
+    /// <see langword="null"/> or can't be resolved by the backoffice.
+    /// </summary>
+    [JsonPropertyName("name")]
     public required string Name { get; set; }
 
-    [JsonProperty("type")]
-    [JsonConverter(typeof(EnumCamelCaseConverter))]
+    /// <summary>
+    /// Gets or sets the localization key the dashboard should use for the name of this column.
+    ///
+    /// Server side localization via <c>ILocalizedTextService</c> was dropped as part of the Umbraco 17 upgrade - the
+    /// new backoffice localizes in the client, so the API returns a key and an English fallback instead.
+    /// </summary>
+    [JsonPropertyName("nameKey")]
+    public string? NameKey { get; set; }
+
+    [JsonPropertyName("type")]
+    [JsonConverter(typeof(CamelCaseEnumConverter<UnusedMediaColumnType>))]
     public required UnusedMediaColumnType Type { get; set; }
 
-    [JsonProperty("allowSort")]
+    [JsonPropertyName("allowSort")]
     public bool AllowSort { get; set; }
 
-    [JsonProperty("defaultOrder")]
-    [JsonConverter(typeof(EnumCamelCaseConverter))]
+    [JsonPropertyName("defaultOrder")]
+    [JsonConverter(typeof(CamelCaseEnumConverter<SortOrder>))]
     public SortOrder DefaultOrder { get; set; }
 
     public UnusedMediaColumn() { }
@@ -37,6 +52,19 @@ public class UnusedMediaColumn {
     public UnusedMediaColumn(string alias, string name, UnusedMediaColumnType type, bool allowSort = false, SortOrder defaultOrder = SortOrder.Ascending) {
         Alias = alias;
         Name = name;
+        Type = type;
+        AllowSort = allowSort;
+        DefaultOrder = defaultOrder;
+    }
+
+    /// <summary>
+    /// Initializes a new column with a localization key for its name.
+    /// </summary>
+    [SetsRequiredMembers]
+    public UnusedMediaColumn(string alias, string name, string? nameKey, UnusedMediaColumnType type, bool allowSort = false, SortOrder defaultOrder = SortOrder.Ascending) {
+        Alias = alias;
+        Name = name;
+        NameKey = nameKey;
         Type = type;
         AllowSort = allowSort;
         DefaultOrder = defaultOrder;

@@ -1,19 +1,21 @@
-﻿using Newtonsoft.Json;
+// [CHANGE: Umbraco 17 upgrade - System.Text.Json] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
+
+using System.Text.Json.Serialization;
 
 namespace Limbo.Umbraco.UnusedMedia.Models.Sites;
 
 public class UnusedSiteItem {
 
-    [JsonProperty("id")]
+    [JsonPropertyName("id")]
     public required int Id { get; init; }
 
-    [JsonProperty("key")]
+    [JsonPropertyName("key")]
     public required Guid Key { get; init; }
 
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public required string Name { get; init; }
 
-    [JsonProperty("mediaFolderId")]
+    [JsonPropertyName("mediaFolderId")]
     public int? MediaFolderId { get; init; }
 
     public UnusedSiteItem() { }

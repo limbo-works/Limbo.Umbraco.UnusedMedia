@@ -1,0 +1,18 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path="../.gitignore" />
+    <File Path="../CLAUDE.md" />
+    <File Path="../debug.bat" />
+    <File Path="../LICENSE.md" />
+    <File Path="../README.md" />
+    <File Path="../release.bat" />
+    <File Path=".editorconfig" />
+    <File Path="Limbo.Umbraco.UnusedMedia.sln.DotSettings" />
+  </Folder>
+  <Project Path="Limbo.Umbraco.UnusedMedia/Limbo.Umbraco.UnusedMedia.csproj" />
+</Solution>

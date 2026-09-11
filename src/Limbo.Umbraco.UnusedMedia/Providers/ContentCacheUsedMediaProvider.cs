@@ -1,14 +1,17 @@
+// [CHANGE: Umbraco 17 upgrade - System.Text.Json + explicit UmbracoContext] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
+
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Limbo.Umbraco.UnusedMedia.BlockList;
+using Limbo.Umbraco.UnusedMedia.Json;
 using Limbo.Umbraco.UnusedMedia.Models.BlockList;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using Skybrud.Essentials.Collections.Extensions;
-using Skybrud.Essentials.Json.Newtonsoft;
+using Skybrud.Essentials.Collections.Enumerables.Extensions;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
 
 namespace Limbo.Umbraco.UnusedMedia.Providers;
@@ -19,24 +22,31 @@ public class ContentCacheUsedMediaProvider : UsedMediaProvider {
     private static readonly Regex _mediaKeyRegex = new("([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})", RegexOptions.Compiled);
 
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly IUmbracoContextFactory _umbracoContextFactory;
     private readonly ILogger<ContentCacheUsedMediaProvider> _logger;
     private readonly UnusedMediaBlockListParser _blockListParser;
 
     private HashSet<Guid>? _usedMediaKeys;
     private HashSet<string>? _usedMediaUdis;
 
-    [Obsolete("Use constructor overload instead.")]
-    public ContentCacheUsedMediaProvider(IServiceScopeFactory serviceScopeFactory, ILogger<ContentCacheUsedMediaProvider> logger, UnusedMediaBlockListParser blockListParser) {
+    /// <summary>
+    /// Initializes a new provider.
+    ///
+    /// Unlike the Umbraco 13 backoffice, Management API requests don't come with an ambient
+    /// <see cref="IUmbracoContext"/>, so one has to be ensured explicitly before querying the published caches.
+    /// </summary>
+    public ContentCacheUsedMediaProvider(IServiceScopeFactory serviceScopeFactory, IUmbracoContextFactory umbracoContextFactory, ILogger<ContentCacheUsedMediaProvider> logger) {
         _serviceScopeFactory = serviceScopeFactory;
-        _logger = logger;
-        _blockListParser = blockListParser;
-    }
-
-    public ContentCacheUsedMediaProvider(IServiceScopeFactory serviceScopeFactory, ILogger<ContentCacheUsedMediaProvider> logger) {
-        _serviceScopeFactory = serviceScopeFactory;
+        _umbracoContextFactory = umbracoContextFactory;
         _logger = logger;
         _blockListParser = StaticServiceProvider.Instance.GetRequiredService<UnusedMediaBlockListParser>();
     }
+
+    /// <summary>
+    /// Initializes a new provider, resolving <see cref="IUmbracoContextFactory"/> from the static service provider.
+    /// </summary>
+    public ContentCacheUsedMediaProvider(IServiceScopeFactory serviceScopeFactory, ILogger<ContentCacheUsedMediaProvider> logger)
+        : this(serviceScopeFactory, StaticServiceProvider.Instance.GetRequiredService<IUmbracoContextFactory>(), logger) { }
 
     /// <summary>
     /// Scans the entire site for media UDIs and GUID keys used within content properties.
@@ -45,12 +55,13 @@ public class ContentCacheUsedMediaProvider : UsedMediaProvider {
     /// <returns>A HashSet of media keys found in content properties.</returns>
     public override HashSet<Guid> ScanForUsedMediaKeys() {
 
-        _logger.LogInformation("DeepScanProvider: Starting scan for used media UDIs in content");
+        _logger.LogInformation("ContentCacheUsedMediaProvider: Starting scan for used media UDIs in content");
 
         HashSet<Guid> usedMediaKeys = [];
         int contentCount = 0;
         int propertyCount = 0;
 
+        using (UmbracoContextReference contextReference = _umbracoContextFactory.EnsureUmbracoContext())
         using (IServiceScope scope = _serviceScopeFactory.CreateScope()) {
 
             IPublishedContentQuery publishedContentQuery = scope.ServiceProvider.GetRequiredService<IPublishedContentQuery>();
@@ -67,7 +78,7 @@ public class ContentCacheUsedMediaProvider : UsedMediaProvider {
             }
         }
 
-        _logger.LogInformation("DeepScanProvider: Scanned {ContentCount} content items with {PropertyCount} properties, found {MediaCount} unique media keys",
+        _logger.LogInformation("ContentCacheUsedMediaProvider: Scanned {ContentCount} content items with {PropertyCount} properties, found {MediaCount} unique media keys",
             contentCount, propertyCount, usedMediaKeys.Count);
 
         return usedMediaKeys;
@@ -89,7 +100,7 @@ public class ContentCacheUsedMediaProvider : UsedMediaProvider {
         if (string.IsNullOrWhiteSpace(value)) return;
 
         if (property.PropertyType.EditorAlias is "Umbraco.BlockList" or "Limbo.Umbraco.BlockList") {
-            if (JsonUtils.TryParseJsonObject(value, out JObject? json)) {
+            if (JsonNodeExtensions.TryParseJsonObject(value, out JsonObject? json)) {
                 try {
                     UnusedMediaBlockListModel blockList = _blockListParser.ParseBlockList(json);
                     AppendMediaKeys(blockList, property, owner, keys);
