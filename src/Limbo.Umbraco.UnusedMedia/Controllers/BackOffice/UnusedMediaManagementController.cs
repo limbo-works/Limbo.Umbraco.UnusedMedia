@@ -1,6 +1,6 @@
-// [CHANGE: Umbraco 17 upgrade - UmbracoAuthorizedApiController replaced by ManagementApiControllerBase] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
-
 using System.Text.Json.Serialization;
+using Asp.Versioning;
+using Limbo.Umbraco.UnusedMedia.Api;
 using Limbo.Umbraco.UnusedMedia.Helpers;
 using Limbo.Umbraco.UnusedMedia.Models;
 using Limbo.Umbraco.UnusedMedia.Models.Filters;
@@ -11,6 +11,7 @@ using Limbo.Umbraco.UnusedMedia.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Models;
@@ -22,21 +23,20 @@ namespace Limbo.Umbraco.UnusedMedia.Controllers.BackOffice;
 
 /// <summary>
 /// Management API controller backing the unused media dashboard.
-///
-/// Umbraco 14 removed <c>UmbracoAuthorizedApiController</c> and the <c>/umbraco/backoffice/api/</c> routes. The
-/// endpoints of this controller are now served from <c>/umbraco/management/api/v1/unused-media/</c> and are
-/// authorized through the standard backoffice policies.
 /// </summary>
-[ApiExplorerSettings(GroupName = "Unused Media")]
-[VersionedApiBackOfficeRoute("unused-media")]
+[ApiController]
+[VersionedApiBackOfficeRoute(UnusedMediaApiConstants.Route)]
 [Authorize(Policy = AuthorizationPolicies.SectionAccessContent)]
-public class UnusedMediaBackOfficeController : ManagementApiControllerBase {
+[MapToApi(UnusedMediaApiConstants.Alias)]
+[ApiVersion(UnusedMediaApiConstants.Version)]
+[ApiExplorerSettings(GroupName = UnusedMediaApiConstants.GroupName)]
+public class UnusedMediaManagementController : ManagementApiControllerBase {
 
     private readonly UnusedMediaService _unusedMediaService;
     private readonly UnusedMediaBackOfficeHelper _unusedMediaBackOfficeHelper;
     private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
 
-    public UnusedMediaBackOfficeController(UnusedMediaService unusedMediaService, UnusedMediaBackOfficeHelper unusedMediaBackOfficeHelper, IBackOfficeSecurityAccessor backOfficeSecurityAccessor) {
+    public UnusedMediaManagementController(UnusedMediaService unusedMediaService, UnusedMediaBackOfficeHelper unusedMediaBackOfficeHelper, IBackOfficeSecurityAccessor backOfficeSecurityAccessor) {
         _unusedMediaService = unusedMediaService;
         _unusedMediaBackOfficeHelper = unusedMediaBackOfficeHelper;
         _backOfficeSecurityAccessor = backOfficeSecurityAccessor;

@@ -9,7 +9,7 @@ import { tryExecute } from "@umbraco-cms/backoffice/resources";
 import { UMB_NOTIFICATION_CONTEXT } from "@umbraco-cms/backoffice/notification";
 import { umbConfirmModal } from "@umbraco-cms/backoffice/modal";
 
-const API_BASE = "/umbraco/management/api/v1/unused-media";
+const API_BASE = "/umbraco/management/api/v1/limbo/unused-media";
 
 // [CHANGE: bugfix - requests were sent without a bearer token, which logged the user out]
 // The backoffice HTTP client only applies the access token when a request declares "security" - internally it does

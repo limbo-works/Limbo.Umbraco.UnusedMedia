@@ -1,3 +1,4 @@
+using Limbo.Umbraco.UnusedMedia.Api;
 using Limbo.Umbraco.UnusedMedia.BlockList;
 using Limbo.Umbraco.UnusedMedia.Helpers;
 using Limbo.Umbraco.UnusedMedia.Manifests;
@@ -36,6 +37,9 @@ public class UnusedMediaComposer : IComposer {
         builder.Services.AddSingleton<UnusedMediaBackOfficeHelper>();
         builder.Services.AddSingleton<UnusedMediaBackOfficeHelperDependencies>();
         builder.Services.AddSingleton<UnusedMediaBlockListParser>();
+
+        // Configure the package for Swagger/OpenAPI
+        builder.Services.ConfigureOptions<UnusedMediaSwaggerGenOptions>();
 
     }
 
