@@ -1,5 +1,3 @@
-// [CHANGE: Umbraco 17 upgrade - replaces wwwroot/Lang/en-US.xml, which the new backoffice no longer reads] Related: see documentation/UMBRACO-17-UPGRADE.md for the full list of changed files.
-
 export default {
     unusedMedia: {
         title: "Unused media",
