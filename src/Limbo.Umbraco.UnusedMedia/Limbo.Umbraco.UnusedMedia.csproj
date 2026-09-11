@@ -10,16 +10,14 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<VersionPrefix>17.0.0</VersionPrefix>
-		<VersionSuffix>alpha000</VersionSuffix>
-		<VersionSuffix Condition="'$(Configuration)'=='Debug'">alpha000.build$([System.DateTime]::UtcNow.ToString(`yyyyMMddHHmm`))</VersionSuffix>
+		<VersionPrefix>17.0.0-alpha000</VersionPrefix>
+		<VersionSuffix Condition="'$(Configuration)'=='Debug'">build$([System.DateTime]::UtcNow.ToString(`yyyyMMddHHmm`))</VersionSuffix>
 		<Company>Limbo</Company>
 		<Authors>Anders Bjerner, Thomas Nielsen</Authors>
-		<Copyright>Copyright © $([System.DateTime]::UtcNow.ToString(`yyyy`))</Copyright>
-		<Title>Limbo UnusedMedia</Title>
-		<AssemblyTitle>Limbo Unused Media</AssemblyTitle>
-		<Product>Limbo Unused Media</Product>
-		<Description></Description>
+    <Product>Limbo Unused Media</Product>
+		<Title>$(Product)</Title>
+    <AssemblyTitle>$(Product)</AssemblyTitle>
+    <Copyright>Copyright © $([System.DateTime]::UtcNow.ToString(`yyyy`))</Copyright>
 	</PropertyGroup>
 
 	<!-- Information for the NuGet package -->
@@ -34,12 +32,19 @@
 
 	<!-- Include additional metadata in the assembly -->
 	<ItemGroup>
+    <AssemblyMetadata Include="Authors" Value="$(Authors)" />
 		<AssemblyMetadata Include="PackageProjectUrl" Value="https://packages.limbo.works/limbo.umbraco.unusedmedia/" />
 		<AssemblyMetadata Include="DocumentationUrl" Value="https://packages.limbo.works/limbo.umbraco.unusedmedia/docs/v17/" />
 		<AssemblyMetadata Include="NuGetUrl" Value="https://www.nuget.org/packages/Limbo.Umbraco.UnusedMedia" />
 		<AssemblyMetadata Include="UmbracoMarketplaceUrl" Value="https://marketplace.umbraco.com/package/limbo.umbraco.unusedmedia" />
 	</ItemGroup>
 
+  <!-- Ignore vulnerabilities from transient dependencies -->
+  <PropertyGroup>
+    <NuGetAuditMode>direct</NuGetAuditMode>
+  </PropertyGroup>
+
+  <!-- Include NuGet dependencies -->
 	<ItemGroup>
 		<PackageReference Include="Skybrud.Essentials" Version="1.1.68" />
 		<PackageReference Include="Umbraco.Cms.Web.Website" Version="[17.0.0,17.9.9)" />
