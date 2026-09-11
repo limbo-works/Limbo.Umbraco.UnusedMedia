@@ -1,8 +1,9 @@
-﻿using Skybrud.Essentials.Umbraco.Constants;
+﻿using Limbo.Umbraco.UnusedMedia.Models.Settings;
+using Microsoft.Extensions.Options;
+using Skybrud.Essentials.Strings;
 using Skybrud.Essentials.Umbraco.Manifests.Extensions;
 using Skybrud.Essentials.Umbraco.Manifests.Extensions.Dashboards;
 using Skybrud.Essentials.Umbraco.Manifests.Extensions.Localization;
-using Skybrud.Essentials.Umbraco.Manifests.Extensions.PropertyEditors;
 using Umbraco.Cms.Core.Manifest;
 using Umbraco.Cms.Infrastructure.Manifest;
 using static Limbo.Umbraco.UnusedMedia.UnusedMediaPackage;
@@ -10,6 +11,12 @@ using static Limbo.Umbraco.UnusedMedia.UnusedMediaPackage;
 namespace Limbo.Umbraco.UnusedMedia.Manifests;
 
 public class UnusedMediaPackageManifestReader : IPackageManifestReader {
+
+    private readonly IOptions<UnusedMediaSettings> _settings;
+
+    public UnusedMediaPackageManifestReader(IOptions<UnusedMediaSettings> settings) {
+        _settings = settings;
+    }
 
     public async Task<IEnumerable<PackageManifest>> ReadPackageManifestsAsync() {
 
@@ -21,7 +28,12 @@ public class UnusedMediaPackageManifestReader : IPackageManifestReader {
             Extensions = [
                 ..GetLocalizationExtensions(),
                 ..GetDashboardExtensions()
-            ]
+            ],
+            Importmap = new PackageManifestImportmap {
+                Imports = new Dictionary<string, string> {
+                    {"@limbo/unused-media/dashboard", $"/App_Plugins/{Alias}/Elements/Dashboard.js"}
+                }
+            }
         };
 
         return await Task.FromResult(new List<PackageManifest> { manifest });
@@ -50,17 +62,16 @@ public class UnusedMediaPackageManifestReader : IPackageManifestReader {
 
     }
 
-    private static IEnumerable<IExtension> GetDashboardExtensions() {
+    private IEnumerable<IExtension> GetDashboardExtensions() {
 
         yield return new DashboardExtension {
             Alias = $"{Alias}.Dashboard",
             Name = $"{Name}: Dashboard",
-            Element = $"/App_Plugins/{Alias}/Elements/Dashboard.js",
-            ElementName = "limbo-unused-media-dashboard",
-            Weight = 20,
+            Element = StringUtils.FirstWithValue(_settings.Value.Dashboard.Element, $"/App_Plugins/{Alias}/Elements/Dashboard.js"),
+            Weight = _settings.Value.Dashboard.Weight,
             Meta = new DashboardMeta {
-                Label = "#unusedMedia_title",
-                Pathname = "unused-media"
+                Label = StringUtils.FirstWithValue(_settings.Value.Dashboard.Label, "#unusedMedia_title"),
+                Pathname = StringUtils.FirstWithValue(_settings.Value.Dashboard.PathName, "unused-media")
             }
         };
 

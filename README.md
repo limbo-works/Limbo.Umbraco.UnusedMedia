@@ -18,11 +18,36 @@ An Umbraco package that helps content editors and administrators identify and cl
 - [Extensibility](#extensibility)
 - [HTTP API](#http-api)
 
+
+
+
+
+<br /><br />
+
 ## Installation
 
-```bash
-dotnet add package Limbo.Umbraco.UnusedMedia
+### Umbraco 17
+
+Version 17 of this package supports Umbraco version 17. The package is only available via [**NuGet**](https://www.nuget.org/packages/Limbo.Umbraco.UnusedMedia). To install the package, you can use either the .NET CLI:
+
 ```
+dotnet add package Limbo.Umbraco.UnusedMedia --version 17.0.0-alpha001
+```
+
+or the NuGet Package Manager:
+
+```
+Install-Package Limbo.Umbraco.UnusedMedia -Version 17.0.0-alpha001
+```
+
+### Other versions of Umbraco
+
+- [**`v13/main`**](https://github.com/skybrud/Limbo.Umbraco.UnusedMedia/tree/v13/main) Umbraco 13
+
+
+
+
+<br /><br />
 
 ## Configuration
 
@@ -49,6 +74,9 @@ All settings live under `Limbo:UnusedMedia` in `appsettings.json`. All of them a
 | `Dashboard:PerPage` | `15` | Rows per page. |
 
 `Dashboard:ElementName` is obsolete as of 17.0.0 — the dashboard element is declared in the package's `umbraco-package.json`.
+
+
+<br /><br />
 
 ## Usage
 
