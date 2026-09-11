@@ -242,7 +242,7 @@ public class UnusedMediaBackOfficeHelper {
             return false;
         }
 
-        int[] path = media.Path.ToInt32Array();
+        IReadOnlyList<int> path = Workarounds.GetPath(media);
 
         // Ignore media if a part of their path is ignored
         if (!options.IncludeIgnored && path.Any(x => options.IgnoredFolderIds.Contains(x))) {
