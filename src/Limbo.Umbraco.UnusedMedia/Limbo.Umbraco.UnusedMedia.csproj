@@ -57,4 +57,10 @@
 		<Content Include="../build/Limbo.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
+  <!-- Include custom appsettings schema -->
+  <ItemGroup>
+    <None Include="appsettings-schema.Limbo.Umbraco.UnusedMedia.json" Pack="true" PackagePath="" />
+    <None Include="buildTransitive\Limbo.Umbraco.UnusedMedia.targets" Pack="true" PackagePath="buildTransitive\" />
+  </ItemGroup>
+
 </Project>
