@@ -1,6 +1,7 @@
 ﻿using Limbo.Umbraco.UnusedMedia.Models.Settings;
 using Microsoft.Extensions.Options;
 using Skybrud.Essentials.Strings;
+using Skybrud.Essentials.Umbraco.Manifests.Conditions;
 using Skybrud.Essentials.Umbraco.Manifests.Extensions;
 using Skybrud.Essentials.Umbraco.Manifests.Extensions.Dashboards;
 using Skybrud.Essentials.Umbraco.Manifests.Extensions.Localization;
@@ -71,7 +72,7 @@ public class UnusedMediaPackageManifestReader : IPackageManifestReader {
             Weight = _settings.Value.Dashboard.Weight,
             Meta = new DashboardMeta {
                 Label = StringUtils.FirstWithValue(_settings.Value.Dashboard.Label, "#unusedMedia_title"),
-                Pathname = StringUtils.FirstWithValue(_settings.Value.Dashboard.PathName, "unused-media")
+                PathName = StringUtils.FirstWithValue(_settings.Value.Dashboard.PathName, "unused-media")
             }
         };
 
