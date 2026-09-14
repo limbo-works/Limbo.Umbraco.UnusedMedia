@@ -47,7 +47,7 @@
   <!-- Include NuGet dependencies -->
 	<ItemGroup>
 		<PackageReference Include="Skybrud.Essentials" Version="1.1.69" />
-		<PackageReference Include="Skybrud.Essentials.Umbraco" Version="17.0.0-alpha008" />
+		<PackageReference Include="Skybrud.Essentials.Umbraco" Version="17.0.0-alpha008-build202609140707" />
 		<PackageReference Include="Umbraco.Cms.Web.Website" Version="[17.1.0,17.9.9)" />
 		<PackageReference Include="Umbraco.Cms.Api.Management" Version="[17.1.0,17.9.9)" />
 	</ItemGroup>
