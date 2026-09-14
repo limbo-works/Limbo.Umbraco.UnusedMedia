@@ -96,6 +96,7 @@ export class LimboUnusedMediaDashboardElement extends UmbElementMixin(LitElement
             cursor: pointer;
             font-family: inherit;
             font-size: 14px;
+            color: var(--uui-color-text, black);
         }
 
         uui-table-head-cell button:hover {
@@ -234,6 +235,14 @@ export class LimboUnusedMediaDashboardElement extends UmbElementMixin(LitElement
 
         uui-checkbox {
             width: 18px;
+        }
+
+        a {
+            color: var(--uui-color-interactive);
+        }
+
+        a:hover {
+            color: var(--uui-color-interactive-emphasis);
         }
 
     `;
