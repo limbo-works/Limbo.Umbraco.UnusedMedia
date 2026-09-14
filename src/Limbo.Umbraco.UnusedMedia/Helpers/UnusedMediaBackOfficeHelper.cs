@@ -263,11 +263,10 @@ public class UnusedMediaBackOfficeHelper {
         }
 
         // Ignore media whose names does not include the specified text
-        if (!string.IsNullOrWhiteSpace(options.Text) && !media.Name.InvariantContains(options.Text)) {
-            return false;
-        }
-
-        return true;
+        if (string.IsNullOrWhiteSpace(options.Text)) return true;
+        if (media.Name.InvariantContains(options.Text)) return true;
+        if (media.Url().InvariantContains(options.Text)) return true;
+        return false;
 
     }
 
