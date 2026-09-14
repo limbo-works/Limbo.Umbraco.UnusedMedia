@@ -73,7 +73,10 @@ public class UnusedMediaPackageManifestReader : IPackageManifestReader {
             Meta = new DashboardMeta {
                 Label = StringUtils.FirstWithValue(_settings.Value.Dashboard.Label, "#unusedMedia_title"),
                 PathName = StringUtils.FirstWithValue(_settings.Value.Dashboard.PathName, "unused-media")
-            }
+            },
+            Conditions = [
+                SectionAliasCondition.Media
+            ]
         };
 
     }
