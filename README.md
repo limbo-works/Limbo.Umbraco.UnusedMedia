@@ -60,7 +60,11 @@ All settings live under `Limbo:UnusedMedia` in `appsettings.json`. All of them a
       "IgnoredFolderIds": [ 1234 ],
       "Dashboard": {
         "AllowedGroups": [ "admin", "webadministratorer" ],
-        "PerPage": 15
+        "PerPage": 15,
+        "Element": "limbo-unused-media-dashboard",
+        "Weight": 20,
+        "Label": "Unused media",
+        "PathName": "unused-media",
       }
     }
   }
