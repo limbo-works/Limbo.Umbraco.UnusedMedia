@@ -1,13 +1,19 @@
 # Limbo Unused Media
 
-An Umbraco package that helps content editors and administrators identify and clean up media that isn't referenced anywhere on the site. It adds a dashboard to the **Content** section listing media that no registered provider reports as being in use.
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/abjerner/Limbo.Umbraco.UnusedMedia/blob/v17/main/LICENSE.md)
+[![NuGet](https://img.shields.io/nuget/vpre/Limbo.Umbraco.UnusedMedia.svg)](https://www.nuget.org/packages/Limbo.Umbraco.UnusedMedia)
+[![NuGet](https://img.shields.io/nuget/dt/Limbo.Umbraco.UnusedMedia.svg)](https://www.nuget.org/packages/Limbo.Umbraco.UnusedMedia)
+[![Umbraco Marketplace](https://img.shields.io/badge/umbraco-marketplace-%233544B1)](https://marketplace.umbraco.com/package/limbo.umbraco.unusedmedia)
+[![Limbo.Umbraco.UnusedMedia at packages.limbo.works](https://img.shields.io/badge/limbo-packages-blue)](https://packages.limbo.works/limbo.umbraco.unusedmedia/)
+
+An Umbraco package that helps content editors and administrators identify and clean up media that isn't referenced anywhere on the site. It adds a dashboard to the **Media** section listing media that no registered provider reports as being in use.
 
 **This branch targets Umbraco 17.** See [documentation/UMBRACO-17-UPGRADE.md](documentation/UMBRACO-17-UPGRADE.md) for what changed coming from v13.
 
-| Package version | Umbraco | .NET |
-|---|---|---|
-| 17.x | 17 | net10.0 |
-| 13.x | 13 | net8.0 |
+| Package version | Umbraco | .NET | Installation |
+|---|---|---|---|
+| 17.x | 17 | .NET 10 | [read more](https://github.com/limbo-works/Limbo.Umbraco.UnusedMedia/tree/v17/main#installation) |
+| 13.x | 13 | .NET 8  | [read more](https://github.com/limbo-works/Limbo.Umbraco.UnusedMedia/tree/v13/main#installation) |
 
 ## Table of Contents
 
@@ -61,7 +67,7 @@ All settings live under `Limbo:UnusedMedia` in `appsettings.json`. All of them a
       "Dashboard": {
         "AllowedGroups": [ "admin", "webadministratorer" ],
         "PerPage": 15,
-        "Element": "limbo-unused-media-dashboard",
+        "Element": "/App_Plugins/Limbo.UnusedMedia/Elements/Dashboard.js",
         "Weight": 20,
         "Label": "Unused media",
         "PathName": "unused-media",
@@ -76,8 +82,11 @@ All settings live under `Limbo:UnusedMedia` in `appsettings.json`. All of them a
 | `IgnoredFolderIds` | *(empty)* | Media folder IDs to ignore. Media with one of these IDs in its path is never listed as unused. |
 | `Dashboard:AllowedGroups` | *(empty)* | User group aliases allowed to use the dashboard. Empty means everyone with access to the Content section. Enforced on the API endpoints, not just in the UI. |
 | `Dashboard:PerPage` | `15` | Rows per page. |
+| `Dashboard:Element` | `/App_Plugins/Limbo.UnusedMedia/Elements/Dashboard.js` | The URL to the JS element of the dashboard. |
+| `Dashboard:Weight` | `20` | The weight of the dashboard. |
+| `Dashboard:Label` | `#unusedMedia_title` | The label of the dashboard. |
+| `Dashboard:PathName` | `unused-media` | The path name of the dashboard. |
 
-`Dashboard:ElementName` is obsolete as of 17.0.0 — the dashboard element is declared in the package's `umbraco-package.json`.
 
 
 <br /><br />
@@ -156,7 +165,3 @@ The endpoints are part of the Management API and require an authenticated backof
 ```
 
 On macOS/Linux, run the equivalent `dotnet build … /t:pack -p:PackageOutputPath=…` directly.
-
-## License
-
-MIT — see [LICENSE.md](LICENSE.md).
